@@ -77,7 +77,7 @@ Activity Level: ${activity_level || "Not specified"}
 Diet Preference: ${diet_preference || "Not specified"}
 Medical Condition: ${medical_condition || "None"}
 
-Create a personalized fitness plan based on these details. If the requested language is ${languageLabel}, return all values inside the JSON object in ${languageLabel}. This includes BMI analysis, calories, workout descriptions, diet recommendations, and health tips. Keep recommendations professional, practical, and personalized.`;
+Create a personalized fitness plan based on these details. If the user has a medical condition, adjust workouts, diet, and health tips to be safe, gentle, and condition-aware. Keep recommendations professional, practical, and personalized.`;
 
     const response = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",

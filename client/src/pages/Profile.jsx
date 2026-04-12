@@ -22,7 +22,7 @@ function Profile() {
 
   const [focused, setFocused] = useState("");
 
-  // ✅ Load existing profile if present
+  // Load existing profile if present
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("profile"));
     if (saved) setForm(saved);

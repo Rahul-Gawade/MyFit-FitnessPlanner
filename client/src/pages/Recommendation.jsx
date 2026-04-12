@@ -14,6 +14,18 @@ function Recommendation() {
   const [isPaused, setIsPaused] = useState(false);
   const speechUtteranceRef = useRef(null);
 
+  // Helper function to extract calorie number from AI response
+  const extractCalorieNumber = (caloriesText) => {
+    if (!caloriesText || typeof caloriesText !== 'string') return 2000; // fallback
+    
+    // Extract first number from string (handles formats like "2000-2500", "2000 calories", etc.)
+    const match = caloriesText.match(/\d+/);
+    const number = match ? parseInt(match[0], 10) : 2000;
+    
+    // Ensure reasonable range
+    return isNaN(number) ? 2000 : Math.max(1200, Math.min(4000, number));
+  };
+
   useEffect(() => {
     return () => {
       if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -342,7 +354,7 @@ function Recommendation() {
                 <p style={styles.calorieSubtext}>{t("recommendation.kcalPerDay")}</p>
               </div>
               <div style={styles.calorieChart}>
-                <div style={styles.calorieBar}>{Math.round(parseInt(plan.calories) / 25)}%</div>
+                <div style={styles.calorieBar}>{Math.round(extractCalorieNumber(plan.calories) / 25)}%</div>
               </div>
             </div>
           )}
@@ -669,33 +681,36 @@ const styles = {
   calorieCard: {
     display: "flex",
     alignItems: "center",
-    gap: "30px",
+    gap: "clamp(20px, 5vw, 30px)",
     background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
     color: "#ffffff",
-    padding: "30px",
+    padding: "clamp(20px, 4vw, 30px)",
     borderRadius: "12px",
     boxShadow: "0 8px 16px rgba(37, 99, 235, 0.2)",
+    flexWrap: "wrap",
   },
 
   calorieContent: {
     flex: 1,
+    minWidth: "200px",
   },
 
   calorieLabel: {
-    fontSize: "14px",
+    fontSize: "clamp(12px, 2.5vw, 14px)",
     opacity: 0.9,
     margin: "0 0 10px 0",
     fontWeight: "500",
   },
 
   calorieValue: {
-    fontSize: "48px",
-    fontWeight: "700",
+    fontSize: "clamp(16px, 8vw, 24px)",
+    fontWeight: "500",
     margin: "0 0 5px 0",
+    lineHeight: "1.1",
   },
 
   calorieSubtext: {
-    fontSize: "13px",
+    fontSize: "clamp(11px, 2vw, 13px)",
     opacity: 0.8,
     margin: 0,
   },
@@ -705,16 +720,17 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    minWidth: "120px",
   },
 
   calorieBar: {
-    width: "120px",
-    height: "120px",
+    width: "clamp(80px, 15vw, 120px)",
+    height: "clamp(80px, 15vw, 120px)",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "24px",
+    fontSize: "clamp(16px, 3vw, 24px)",
     fontWeight: "700",
     background: "rgba(255, 255, 255, 0.2)",
     border: "3px solid rgba(255, 255, 255, 0.4)",

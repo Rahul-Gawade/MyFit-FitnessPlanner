@@ -44,7 +44,7 @@ function Signup() {
     localStorage.setItem("isLoggedIn", "true");
 
     setError("");
-    navigate("/profile");
+    navigate("/home");
   };
 
   const styles = {

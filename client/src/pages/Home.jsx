@@ -12,7 +12,8 @@ function Home() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const speechUtteranceRef = useRef(null);
-
+  
+  //cancel ongoing speech on unmount to prevent memory leaks and unwanted behavior
   useEffect(() => {
     return () => {
       if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -592,39 +593,39 @@ const styles = {
   },
 
   sectionTitle: {
-    fontSize: "24px",
+    fontSize: "20px",
     fontWeight: "700",
     color: "#1e293b",
-    marginBottom: "25px",
-    paddingBottom: "12px",
+    marginBottom: "20px",
+    paddingBottom: "10px",
     borderBottom: "3px solid #2563eb",
     display: "inline-block",
   },
 
   cardGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "20px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+    gap: "15px",
   },
 
   card: {
     position: "relative",
     overflow: "hidden",
-    padding: "30px",
-    borderRadius: "16px",
+    padding: "20px",
+    borderRadius: "12px",
     cursor: "pointer",
     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
     color: "#ffffff",
-    minHeight: "200px",
+    minHeight: "160px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
   },
 
   cardHovered: {
-    transform: "translateY(-8px)",
-    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
+    transform: "translateY(-6px)",
+    boxShadow: "0 15px 30px rgba(0, 0, 0, 0.12)",
   },
 
   cardInner: {
@@ -636,40 +637,40 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: "15px",
+    marginBottom: "10px",
   },
 
   cardTitle: {
-    fontSize: "18px",
+    fontSize: "16px",
     fontWeight: "700",
     margin: 0,
     opacity: 0.95,
   },
 
   cardArrow: {
-    fontSize: "24px",
+    fontSize: "20px",
     opacity: 0.8,
     transition: "transform 0.3s ease",
   },
 
   cardValue: {
-    fontSize: "40px",
+    fontSize: "28px",
     fontWeight: "800",
-    margin: "15px 0",
+    margin: "10px 0",
     opacity: 1,
   },
 
   cardDescription: {
-    fontSize: "14px",
+    fontSize: "13px",
     opacity: 0.9,
-    margin: "10px 0 0 0",
+    margin: "8px 0 0 0",
     fontWeight: "500",
   },
 
   cardClickHint: {
-    fontSize: "12px",
+    fontSize: "11px",
     opacity: 0.7,
-    marginTop: "10px",
+    marginTop: "8px",
     fontStyle: "italic",
   },
 
