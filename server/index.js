@@ -31,6 +31,7 @@ app.post("/generate-plan", async (req, res) => {
       diet_preference,
       medical_condition,
       language,
+      healthData,
     } = req.body;
 
     // Validate required fields
@@ -40,6 +41,20 @@ app.post("/generate-plan", async (req, res) => {
 
     const userLanguage = language || "en";
     const languageLabel = userLanguage === "mr" ? "Marathi" : userLanguage === "hi" ? "Hindi" : "English";
+
+    const medicationText = healthData?.medications?.length
+      ? `Current medications:\n${healthData.medications
+          .map((med) =>
+            `- ${med.name} (${med.dosage}, ${med.frequency})${med.notes ? `: ${med.notes}` : ""}`)
+          .join("\n")}`
+      : "No current medications.";
+
+    const symptomText = healthData?.symptoms?.length
+      ? `Recent symptoms:\n${healthData.symptoms
+          .map((symptom) =>
+            `- ${symptom.symptom} (Severity: ${symptom.severity}/5)${symptom.notes ? `: ${symptom.notes}` : ""}`)
+          .join("\n")}`
+      : "No recent symptoms.";
 
     const prompt = `You are a professional fitness trainer and diet expert.
 
@@ -77,7 +92,12 @@ Activity Level: ${activity_level || "Not specified"}
 Diet Preference: ${diet_preference || "Not specified"}
 Medical Condition: ${medical_condition || "None"}
 
-Create a personalized fitness plan based on these details. If the user has a medical condition, adjust workouts, diet, and health tips to be safe, gentle, and condition-aware. Keep recommendations professional, practical, and personalized.`;
+${medicationText}
+${symptomText}
+
+Important: Return all results in ${languageLabel} language. If ${languageLabel} is not English, use that language for every field in the JSON output, including bmiAnalysis, calories, workout, diet, and healthTips.
+
+Create a personalized fitness plan based on these details. Adjust workouts, diet, and health tips according to medications and symptoms. If the user has any current symptoms or medications, ensure the plan is safe, gentle, and condition-aware. Keep recommendations professional, practical, and personalized.`;
 
     const response = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",

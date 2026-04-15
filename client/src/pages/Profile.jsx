@@ -7,7 +7,7 @@ import Header from "../components/Header";
 function Profile() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { setPlan } = useContext(AppContext);
+  const { setPlan, medicationList, symptomLogs } = useContext(AppContext);
 
   const [form, setForm] = useState({
     age: "",
@@ -46,19 +46,39 @@ function Profile() {
     // ✅ Generate plan via API
     try {
       const bmi = calculateBMI();
+
+      const healthData = {
+        medications: medicationList.map((med) => ({
+          name: med.name,
+          dosage: med.dosage,
+          frequency: med.frequency,
+          notes: med.notes,
+        })),
+        symptoms: symptomLogs.map((log) => ({
+          symptom: log.symptom,
+          severity: log.severity,
+          notes: log.notes,
+        })),
+      };
+
       const response = await fetch("http://localhost:5000/generate-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, bmi, language: i18n.language || "en" }),
+        body: JSON.stringify({
+          ...form,
+          bmi,
+          language: i18n.language || "en",
+          healthData,
+        }),
       });
 
       if (!response.ok) {
-alert(t("profile.generateError"));
+        alert(t("profile.generateError"));
         return;
       }
 
       const data = await response.json();
-      
+
       // ✅ Save plan to context (auto-saves to localStorage)
       setPlan(data.plan);
 

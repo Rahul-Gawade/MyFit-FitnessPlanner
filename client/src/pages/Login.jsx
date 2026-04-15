@@ -56,7 +56,7 @@ function Login() {
     localStorage.setItem("isLoggedIn", "true");
 
     setLoading(false);
-    navigate("/profile");
+    navigate("/home");
   };
 
   const styles = {
