@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
+import { supabase } from "../lib/supabase";
+
 function Signup() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -13,83 +15,117 @@ function Signup() {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    // ✅ get existing user (ONLY this is parsed)
-    const existingUser = JSON.parse(localStorage.getItem("user") || "null");
-``
-
-    // ❌ if user exists
-    if (existingUser && existingUser.email === data.email) {
-      setError(t("signup.userExists"));
-      return;
-    }
-
-    // ❌ validation
     if (data.password.length < 6) {
       setError(t("signup.passwordMin"));
+      setLoading(false);
       return;
     }
 
-    // ✅ save user
-    localStorage.setItem("user", JSON.stringify(data));
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: {
+          full_name: data.name,
+        },
+      },
+    });
 
-    // ✅ login flag (STRING ONLY)
-    localStorage.setItem("isLoggedIn", "true");
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
 
-    setError("");
-    navigate("/home");
+    if (authData.user) {
+      // Create an initial entry in the profiles table for this new user
+      const { error: profileError } = await supabase.from("profiles").insert([
+        {
+          id: authData.user.id,
+          name: data.name,
+          email: data.email,
+        }
+      ]);
+
+      if (profileError) {
+        console.error("Profile Insert Error:", profileError);
+        setError("User created, but profile failed to save: " + profileError.message);
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem("isLoggedIn", "true");
+      navigate("/home");
+    }
+    setLoading(false);
   };
 
   const styles = {
     container: {
       minHeight: "100vh",
-      paddingTop: "80px",
       display: "flex",
+      flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      background: "linear-gradient(135deg, #eef2ff, #ffffff)",
+      background: "linear-gradient(135deg, var(--bg-start), var(--bg-mid), var(--bg-end))",
+      padding: "0 20px",
+      fontFamily: "var(--font-sans)",
     },
     card: {
-      width: "350px",
-      padding: "30px",
-      borderRadius: "16px",
-      background: "#fff",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+      width: "380px",
+      padding: "40px",
+      borderRadius: "24px",
+      background: "var(--card-bg)",
+      backdropFilter: "blur(12px)",
+      boxShadow: "0 20px 40px rgba(255, 107, 107, 0.08)",
+      border: "1px solid var(--card-border)",
       textAlign: "center",
     },
     input: {
       width: "100%",
-      padding: "12px",
-      margin: "10px 0",
-      borderRadius: "8px",
-      border: "1px solid #ccc",
+      padding: "14px",
+      margin: "12px 0",
+      borderRadius: "12px",
+      border: "1px solid rgba(0,0,0,0.1)",
+      outline: "none",
+      transition: "border 0.3s ease",
+      fontFamily: "var(--font-sans)",
+      boxSizing: "border-box",
     },
     button: {
       width: "100%",
-      padding: "12px",
-      marginTop: "15px",
-      borderRadius: "10px",
+      padding: "14px",
+      marginTop: "20px",
+      borderRadius: "12px",
       border: "none",
-      background: "#2563eb",
-      color: "#fff",
-      cursor: "pointer",
+      background: loading ? "#9ca3af" : "var(--food-primary)",
+      color: "var(--button-text)",
+      cursor: loading ? "not-allowed" : "pointer",
+      fontWeight: "700",
+      transition: "all 0.3s ease",
+      boxShadow: "0 8px 16px rgba(255, 107, 107, 0.2)",
     },
     error: {
-      color: "red",
-      marginTop: "10px",
+      color: "#ef4444",
+      marginTop: "12px",
+      fontWeight: "500",
     },
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div style={styles.container} className="animate-bg-shift">
+      <div style={styles.card} className="animate-scale-in">
         <h2>{t("signup.title")}</h2>
 
         <form onSubmit={handleSubmit}>
@@ -118,7 +154,9 @@ function Signup() {
             style={styles.input}
           />
 
-          <button style={styles.button}>{t("signup.signUpButton")}</button>
+          <button style={styles.button} disabled={loading} className="hover-scale">
+            {loading ? t("signup.signingUp") || "Signing Up..." : t("signup.signUpButton")}
+          </button>
         </form>
 
         {error && <p style={styles.error}>{error}</p>}

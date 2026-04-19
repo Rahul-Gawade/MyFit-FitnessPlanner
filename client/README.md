@@ -1,16 +1,36 @@
-# React + Vite
+# MyFit-FitnessPlanner (Client)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + Vite application for personalized fitness planning, health tracking, and AI-powered coaching.
 
-Currently, two official plugins are available:
+## Supabase Integration
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+This project is now integrated with Supabase for authentication and data persistence.
 
-## React Compiler
+### Prerequisites
+1.  Create a project at [Supabase](https://supabase.com).
+2.  Go to **Project Settings > API** and copy your `URL` and `Anon Key`.
+3.  Go to the **SQL Editor** in Supabase and run the schema found in `supabase_schema.sql` (if provided) or manually create the following tables:
+    -   `profiles` (linked to `auth.users`)
+    -   `health_logs` (user_id, type, data, created_at)
+    -   `chat_logs` (user_id, data, created_at)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Setup
+1.  Create a `.env` file in this directory:
+    ```env
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the development server:
+    ```bash
+    npm run dev
+    ```
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Features
+-   **Universal Multilingual Support**: Plan generation in English, Hindi, and Marathi.
+-   **AI Coach**: Interactive chat with Contextual awareness of your profile and health logs.
+-   **Health Tracker**: Log medications and symptoms, synced with your cloud account.
+-   **Premium Dark Mode**: Seamless UI experience with theme-aware components.

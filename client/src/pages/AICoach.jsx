@@ -2,13 +2,14 @@ import React, { useState, useContext, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { AppContext } from "../context/AppContext";
 import Navbar from "../components/Header";
+import { API } from "../services/api";
+import { Bot, Send, User } from "lucide-react";
 
 function AICoach() {
   const { t } = useTranslation();
-  const { plan } = useContext(AppContext); // ✅ get dynamic data
+  const { plan, medicationList, symptomLogs, waterIntake, aiCoachChat: chat, addChatMessage } = useContext(AppContext); 
 
   const [message, setMessage] = useState("");
-  const [chat, setChat] = useState([]);
   const chatEndRef = useRef(null);
 
   // ✅ Auto scroll
@@ -20,33 +21,38 @@ function AICoach() {
     if (!message.trim()) return;
 
     const userMsg = { sender: "user", text: message };
-    setChat((prev) => [...prev, userMsg]);
+    addChatMessage(userMsg);
+
+    const savedProfile = JSON.parse(localStorage.getItem("profile") || "{}");
 
     try {
-      const res = await fetch("http://localhost:5000/ai-coach", {
+      const res = await fetch(`${API}/ai-coach`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message,
-          bmi: plan?.userSummary?.bmi || 22,
-          goal: plan?.userSummary?.goal || "fitness",
-          medical_condition: plan?.userSummary?.medical_condition || "None",
+          profile: {
+            ...savedProfile,
+            bmi: plan?.userSummary?.bmi || 22,
+          },
+          healthData: {
+            medications: medicationList || [],
+            symptoms: symptomLogs || [],
+            waterIntake: waterIntake || 0,
+          },
+          language: i18n.language || "en",
         }),
       });
 
       const data = await res.json();
 
       const aiMsg = { sender: "ai", text: data.reply };
-
-      setChat((prev) => [...prev, aiMsg]);
+      addChatMessage(aiMsg);
 
     } catch (err) {
-      setChat((prev) => [
-        ...prev,
-        { sender: "ai", text: t("aiCoach.serverError") },
-      ]);
+      addChatMessage({ sender: "ai", text: t("aiCoach.serverError") });
     }
 
     setMessage("");
@@ -54,50 +60,65 @@ function AICoach() {
 
   const styles = {
     container: {
-      padding: "20px",
+      padding: "20px 15px",
       maxWidth: "600px",
-      margin: "auto",
-      fontFamily: "sans-serif",
+      margin: "0 auto",
+      fontFamily: "var(--font-sans)",
+      display: "flex",
+      flexDirection: "column",
+      height: "calc(100vh - 80px)", /* Full height minus header */
     },
     chatBox: {
-      height: "350px",
+      flex: 1,
+      minHeight: "300px",
       overflowY: "auto",
-      borderRadius: "15px",
-      padding: "15px",
-      background: "#f9fafb",
-      boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
-      marginBottom: "10px",
+      borderRadius: "20px",
+      padding: "clamp(10px, 4vw, 20px)",
+      background: "var(--card-bg)",
+      backdropFilter: "blur(12px)",
+      border: "1px solid var(--card-border)",
+      boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)",
+      marginTop: "10px",
+      marginBottom: "20px",
     },
     message: (sender) => ({
       textAlign: sender === "user" ? "right" : "left",
-      margin: "8px 0",
+      margin: "12px 0",
     }),
     bubble: (sender) => ({
-      background: sender === "user" ? "#2563eb" : "#e5e7eb",
-      color: sender === "user" ? "#fff" : "#000",
-      padding: "10px 14px",
-      borderRadius: "15px",
+      background: sender === "user" ? "var(--food-primary)" : "var(--ai-bubble-bg)",
+      color: sender === "user" ? "var(--button-text)" : "var(--text-primary)",
+      padding: "12px 18px",
+      borderRadius: sender === "user" ? "18px 18px 0 18px" : "18px 18px 18px 0",
       display: "inline-block",
       maxWidth: "75%",
+      boxShadow: sender === "user" ? "0 4px 10px rgba(255, 107, 107, 0.2)" : "0 4px 10px rgba(0,0,0,0.05)",
+      fontWeight: "500",
+      lineHeight: "1.5",
     }),
     inputBox: {
       display: "flex",
-      gap: "10px",
+      gap: "12px",
     },
     input: {
       flex: 1,
-      padding: "10px",
-      borderRadius: "10px",
-      border: "1px solid #ccc",
+      padding: "14px",
+      borderRadius: "14px",
+      border: "1px solid rgba(0,0,0,0.1)",
       outline: "none",
+      fontFamily: "var(--font-sans)",
+      boxShadow: "0 4px 10px rgba(0,0,0,0.02)",
     },
     button: {
-      padding: "10px 15px",
-      borderRadius: "10px",
+      padding: "14px 24px",
+      borderRadius: "14px",
       border: "none",
-      background: "#2563eb",
-      color: "#fff",
+      background: "var(--food-primary)",
+      color: "var(--button-text)",
       cursor: "pointer",
+      fontWeight: "700",
+      boxShadow: "0 8px 16px rgba(255, 107, 107, 0.2)",
+      transition: "all 0.3s ease",
     },
   };
 
@@ -106,15 +127,21 @@ function AICoach() {
       <Navbar />
 
       <div style={styles.container}>
-        <h2>{t("aiCoach.title")}</h2>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)', marginBottom: '20px' }}>
+          <Bot color="var(--food-primary)" size={32} /> {t("aiCoach.title")}
+        </h2>
 
         {/* Chat */}
-        <div style={styles.chatBox}>
+        <div style={styles.chatBox} className="hide-scrollbar">
           {chat.map((msg, index) => (
             <div key={index} style={styles.message(msg.sender)}>
-              <span style={styles.bubble(msg.sender)}>
-                {msg.text}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: msg.sender === "user" ? 'flex-end' : 'flex-start', gap: '10px' }}>
+                {msg.sender === "ai" && <Bot color="var(--food-primary)" size={26} style={{ marginTop: '8px', flexShrink: 0 }} />}
+                <span style={styles.bubble(msg.sender)}>
+                  {msg.text}
+                </span>
+                {msg.sender === "user" && <User color="var(--text-secondary)" size={26} style={{ marginTop: '8px', flexShrink: 0 }} />}
+              </div>
             </div>
           ))}
           <div ref={chatEndRef} />
@@ -131,8 +158,8 @@ function AICoach() {
             onKeyDown={(e) => e.key === "Enter" && sendMessage()} // ✅ Enter key
           />
 
-          <button style={styles.button} onClick={sendMessage}>
-            {t("aiCoach.send")}
+          <button style={{ ...styles.button, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={sendMessage}>
+            {t("aiCoach.send")} <Send size={18} />
           </button>
         </div>
       </div>

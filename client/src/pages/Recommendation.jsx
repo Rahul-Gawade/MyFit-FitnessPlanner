@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import Navbar from "../components/Header";
 import jsPDF from "jspdf";
+import { TrendingUp, Flame, Dumbbell, Apple, Lightbulb, Stethoscope, FileDown, MessageSquare, Settings, User, Ruler, Scale, Target, Activity, CalendarDays, Sunrise, Sun, Moon, ClipboardList } from "lucide-react";
 
 function Recommendation() {
   const { t, i18n } = useTranslation();
@@ -144,7 +145,7 @@ function Recommendation() {
 
       const addSection = (title, content) => {
         pdf.setFontSize(14);
-        pdf.setTextColor("#1d4ed8");
+        pdf.setTextColor("#ff6b6b");
         pdf.text(title, leftMargin, y);
         y += 8;
 
@@ -202,18 +203,18 @@ function Recommendation() {
   };
 
   const detailSections = [
-    { id: "BMI", title: t("recommendation.bmiAnalysis"), icon: "📈" },
-    { id: "Calories", title: t("recommendation.recommendedCalories"), icon: "🔥" },
-    { id: "Workout", title: t("recommendation.workoutPlan"), icon: "💪" },
-    { id: "Diet", title: t("recommendation.dietPlan"), icon: "🍎" },
-    { id: "HealthTips", title: t("recommendation.healthTips"), icon: "💡" },
+    { id: "BMI", title: t("recommendation.bmiAnalysis"), icon: <TrendingUp size={24} /> },
+    { id: "Calories", title: t("recommendation.recommendedCalories"), icon: <Flame size={24} /> },
+    { id: "Workout", title: t("recommendation.workoutPlan"), icon: <Dumbbell size={24} /> },
+    { id: "Diet", title: t("recommendation.dietPlan"), icon: <Apple size={24} /> },
+    { id: "HealthTips", title: t("recommendation.healthTips"), icon: <Lightbulb size={24} /> },
   ];
 
-  if (plan.userSummary?.medical_condition && plan.userSummary.medical_condition !== "None") {
+  if (plan?.userSummary?.medical_condition && plan.userSummary.medical_condition !== "None") {
     detailSections.splice(4, 0, {
       id: "Condition",
       title: "Condition Guidance",
-      icon: "🩺",
+      icon: <Stethoscope size={24} />,
     });
   }
 
@@ -222,9 +223,9 @@ function Recommendation() {
     return (
       <div>
         <Navbar />
-        <div style={styles.emptyState}>
-          <div style={styles.emptyStateCard}>
-            <div style={styles.emptyIcon}>📋</div>
+        <div style={styles.emptyState} className="animate-bg-shift">
+          <div style={styles.emptyStateCard} className="animate-scale-in">
+            <div style={styles.emptyIcon}><ClipboardList size={48} color="var(--food-primary)" /></div>
             <h2>{t("recommendation.noPlanTitle")}</h2>
             <p>{t("recommendation.noPlanText")}</p>
             <button 
@@ -244,55 +245,55 @@ function Recommendation() {
   return (
     <div>
       <Navbar />
-      <div style={styles.mainContainer}>
+      <div style={styles.mainContainer} className="animate-bg-shift">
         {/* Header Section */}
-        <div style={styles.headerSection}>
+        <div style={styles.headerSection} className="animate-slide-up stagger-1">
           <h1 style={styles.mainTitle}>{t("recommendation.pageTitle")}</h1>
           <p style={styles.subtitle}>{t("recommendation.pageSubtitle")}</p>
         </div>
 
-        <div style={styles.planContent}>
+        <div style={styles.planContent} className="animate-slide-up stagger-2 plan-content-responsive">
 
         {/* User Summary Cards */}
         <div style={styles.section}>
           <h2 style={styles.sectionTitle}>{t("recommendation.profileSummary")}</h2>
-          <div style={styles.summaryGrid}>
+          <div style={styles.summaryGrid} className="summary-grid-responsive">
             <StatCard 
               label={t("recommendation.age")} 
               value={plan.userSummary?.age} 
-              icon="🎂"
+              icon={<CalendarDays size={20} />}
             />
             <StatCard 
               label={t("recommendation.gender")} 
               value={plan.userSummary?.gender} 
-              icon="👤"
+              icon={<User size={20} />}
             />
             <StatCard 
               label={t("recommendation.height")} 
               value={`${plan.userSummary?.height} cm`} 
-              icon="📏"
+              icon={<Ruler size={20} />}
             />
             <StatCard 
               label={t("recommendation.weight")} 
               value={`${plan.userSummary?.weight} kg`} 
-              icon="⚖️"
+              icon={<Scale size={20} />}
             />
             <StatCard 
               label={t("recommendation.bmi")} 
               value={plan.userSummary?.bmi} 
-              icon="📊"
+              icon={<Activity size={20} />}
               highlight
             />
             <StatCard 
               label={t("recommendation.medicalCondition")} 
               value={plan.userSummary?.medical_condition || "None"} 
-              icon="🩺"
+              icon={<Stethoscope size={20} />}
               highlight
             />
             <StatCard 
               label={t("recommendation.goal")} 
               value={plan.userSummary?.goal} 
-              icon="🎯"
+              icon={<Target size={20} />}
               highlight
             />
           </div>
@@ -337,11 +338,11 @@ function Recommendation() {
         </div>
 
         {/* Selected Detail */}
-        <div style={styles.section}>
+        <div style={styles.section} className="animate-slide-up stagger-3">
           <h2 style={styles.sectionTitle}>{t("recommendation.detailView")}</h2>
           {selectedSection === "BMI" && (
             <div style={styles.analysisCard}>
-              <div style={styles.analysisIcon}>📈</div>
+              <div style={styles.analysisIcon}><TrendingUp size={36} color="var(--food-primary)" /></div>
               <p style={styles.analysisText}>{plan.bmiAnalysis}</p>
             </div>
           )}
@@ -361,31 +362,51 @@ function Recommendation() {
 
           {selectedSection === "Workout" && (
             <div style={styles.workoutList}>
-              {plan.workout?.map((w, i) => (
-                <div key={i} style={styles.workoutItem}>
-                  <span style={styles.workoutNumber}>{i + 1}</span>
-                  <span style={styles.workoutText}>{w}</span>
-                </div>
-              ))}
+              {Array.isArray(plan.workout) ? (
+                plan.workout.map((w, i) => (
+                  <div key={i} style={styles.workoutItem}>
+                    <span style={styles.workoutNumber}>{i + 1}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ ...styles.workoutText, fontWeight: '700' }}>
+                        {typeof w === 'object' ? w.day : w}
+                      </span>
+                      {typeof w === 'object' && w.exercises && (
+                        <span style={{ ...styles.workoutText, fontSize: '13px', opacity: 0.8 }}>
+                          {Array.isArray(w.exercises) ? w.exercises.join(", ") : w.exercises}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : typeof plan.workout === "string" ? (
+                plan.workout.split("\n").filter(line => line.trim()).map((w, i) => (
+                  <div key={i} style={styles.workoutItem}>
+                    <span style={styles.workoutNumber}>{i + 1}</span>
+                    <span style={styles.workoutText}>{w.replace(/^\d+\.\s*/, "")}</span>
+                  </div>
+                ))
+              ) : (
+                <div style={styles.emptyText}>{t("recommendation.noWorkoutData") || "No workout data available"}</div>
+              )}
             </div>
           )}
 
           {selectedSection === "Diet" && (
             <div style={styles.dietGrid}>
               <MealCard
-                title="🌅 Breakfast"
+                title={<span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Sunrise size={20} /> Breakfast</span>}
                 content={plan.diet?.breakfast}
                 bgColor="#fef3c7"
                 borderColor="#f59e0b"
               />
               <MealCard
-                title="🍽️ Lunch"
+                title={<span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Sun size={20} /> Lunch</span>}
                 content={plan.diet?.lunch}
-                bgColor="#dbeafe"
-                borderColor="#3b82f6"
+                bgColor="#ffedd5"
+                borderColor="#f97316"
               />
               <MealCard
-                title="🍽️ Dinner"
+                title={<span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Moon size={20} /> Dinner</span>}
                 content={plan.diet?.dinner}
                 bgColor="#fce7f3"
                 borderColor="#ec4899"
@@ -395,12 +416,23 @@ function Recommendation() {
 
           {selectedSection === "HealthTips" && (
             <div style={styles.tipsGrid}>
-              {plan.healthTips?.map((tip, i) => (
-                <div key={i} style={styles.tipCard}>
-                  <span style={styles.tipIcon}>💡</span>
-                  <p style={styles.tipText}>{tip}</p>
-                </div>
-              ))}
+              {Array.isArray(plan.healthTips) ? (
+                plan.healthTips.map((tip, i) => (
+                  <div key={i} style={styles.tipCard}>
+                    <span style={styles.tipIcon}><Lightbulb size={24} color="#10b981" /></span>
+                    <p style={styles.tipText}>{tip}</p>
+                  </div>
+                ))
+              ) : typeof plan.healthTips === "string" ? (
+                plan.healthTips.split("\n").filter(line => line.trim()).map((tip, i) => (
+                  <div key={i} style={styles.tipCard}>
+                    <span style={styles.tipIcon}><Lightbulb size={24} color="#10b981" /></span>
+                    <p style={styles.tipText}>{tip.replace(/^\d+\.\s*/, "")}</p>
+                  </div>
+                ))
+              ) : (
+                <div style={styles.emptyText}>{t("recommendation.noTipsData") || "No health tips available"}</div>
+              )}
             </div>
           )}
 
@@ -414,7 +446,7 @@ function Recommendation() {
         </div>
 
         {/* Action Buttons */}
-        <div style={styles.actionButtons}>
+        <div style={styles.actionButtons} className="animate-slide-up stagger-4">
           <button
             onClick={downloadPDF}
             style={styles.downloadButton}
@@ -427,7 +459,7 @@ function Recommendation() {
               e.target.style.boxShadow = "0 4px 6px rgba(34, 197, 94, 0.2)";
             }}
           >
-            📄 {t("recommendation.downloadPdf")}
+            <FileDown size={18} style={{ marginRight: '8px' }} /> {t("recommendation.downloadPdf")}
           </button>
           <button
             onClick={() => navigate("/ai")}
@@ -441,7 +473,7 @@ function Recommendation() {
               e.target.style.boxShadow = "0 4px 6px rgba(37, 99, 235, 0.2)";
             }}
           >
-            💬 {t("recommendation.chatCoach")}
+            <MessageSquare size={18} style={{ marginRight: '8px' }} /> {t("recommendation.chatCoach")}
           </button>
           <button
             onClick={() => navigate("/profile")}
@@ -455,7 +487,7 @@ function Recommendation() {
               e.target.style.boxShadow = "0 4px 6px rgba(107, 114, 128, 0.1)";
             }}
           >
-            📝 {t("recommendation.updateProfile")}
+            <Settings size={18} style={{ marginRight: '8px' }} /> {t("recommendation.updateProfile")}
           </button>
         </div>
         </div>
@@ -501,48 +533,46 @@ const styles = {
   mainContainer: {
     maxWidth: "1100px",
     margin: "0 auto",
-    padding: "40px 20px",
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    background: "linear-gradient(180deg, #ebf2ff 0%, #f8fbff 100%)",
+    padding: "clamp(20px, 5vw, 40px) 20px",
+    fontFamily: "var(--font-sans)",
     minHeight: "100vh",
   },
 
   headerSection: {
     textAlign: "center",
     marginBottom: "50px",
-    animation: "slideDown 0.6s ease-out",
-    background: "#eef4ff",
+    background: "var(--card-bg)",
+    backdropFilter: "blur(12px)",
     padding: "28px 24px",
     borderRadius: "24px",
-    boxShadow: "0 25px 60px rgba(59, 130, 246, 0.12)",
-    border: "1px solid rgba(59, 130, 246, 0.16)",
+    boxShadow: "0 25px 60px rgba(255, 107, 107, 0.08)",
+    border: "1px solid var(--card-border)",
   },
 
   mainTitle: {
     fontSize: "clamp(24px, 7vw, 36px)",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-primary)",
     marginBottom: "10px",
   },
 
   subtitle: {
     fontSize: "16px",
-    color: "#64748b",
+    color: "var(--text-secondary)",
     margin: 0,
   },
 
   section: {
     marginBottom: "40px",
-    animation: "fadeIn 0.6s ease-out",
   },
 
   sectionTitle: {
     fontSize: "22px",
-    fontWeight: "600",
-    color: "#1e293b",
+    fontWeight: "700",
+    color: "var(--text-primary)",
     marginBottom: "20px",
     paddingBottom: "12px",
-    borderBottom: "3px solid #2563eb",
+    borderBottom: "3px solid var(--food-primary)",
     display: "inline-block",
   },
 
@@ -560,18 +590,18 @@ const styles = {
     width: "100%",
     padding: "20px",
     borderRadius: "18px",
-    border: "1px solid rgba(59, 130, 246, 0.2)",
-    background: "#f8fbff",
+    border: "1px solid var(--card-border)",
+    background: "var(--card-bg)",
     cursor: "pointer",
     textAlign: "left",
     transition: "all 0.2s ease",
-    color: "#0f172a",
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+    color: "var(--text-primary)",
+    boxShadow: "0 10px 30px rgba(255, 107, 107, 0.04)",
   },
   sectionCardActive: {
-    borderColor: "#2563eb",
-    background: "#dbeafe",
-    boxShadow: "0 18px 42px rgba(37, 99, 235, 0.16)",
+    borderColor: "var(--food-primary)",
+    background: "rgba(255, 107, 107, 0.05)",
+    boxShadow: "0 18px 42px rgba(255, 107, 107, 0.12)",
   },
 
   sectionCardIcon: {
@@ -582,7 +612,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontSize: "18px",
-    background: "#e0f2fe",
+    background: "rgba(255, 107, 107, 0.1)",
   },
 
   sectionCardTitle: {
@@ -599,19 +629,19 @@ const styles = {
   },
 
   statCard: {
-    background: "#f8fbff",
+    background: "var(--card-bg)",
     padding: "20px",
     borderRadius: "16px",
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
+    boxShadow: "0 10px 30px rgba(255, 107, 107, 0.04)",
     textAlign: "center",
     transition: "all 0.3s ease",
     cursor: "pointer",
-    border: "1px solid rgba(59, 130, 246, 0.15)",
+    border: "1px solid var(--card-border)",
   },
   statCardHighlight: {
-    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    background: "linear-gradient(135deg, var(--food-primary) 0%, #ff9f43 100%)",
     color: "#ffffff",
-    boxShadow: "0 8px 16px rgba(37, 99, 235, 0.2)",
+    boxShadow: "0 8px 16px rgba(255, 107, 107, 0.2)",
   },
 
   statIcon: {
@@ -635,20 +665,18 @@ const styles = {
     margin: "5px 0 0 0",
   },
 
-  statCardHighlight: {
-    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-    color: "#ffffff",
-  },
+
 
   analysisCard: {
     display: "flex",
     alignItems: "flex-start",
     gap: "20px",
-    background: "#eef2ff",
+    background: "var(--card-bg)",
+    backdropFilter: "blur(12px)",
     padding: "28px",
     borderRadius: "18px",
-    boxShadow: "0 20px 45px rgba(15, 23, 42, 0.08)",
-    border: "1px solid rgba(59, 130, 246, 0.16)",
+    boxShadow: "0 20px 45px rgba(255, 107, 107, 0.08)",
+    border: "1px solid var(--card-border)",
   },
 
   analysisIcon: {
@@ -682,11 +710,11 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "clamp(20px, 5vw, 30px)",
-    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    background: "linear-gradient(135deg, var(--food-primary) 0%, #ff9f43 100%)",
     color: "#ffffff",
     padding: "clamp(20px, 4vw, 30px)",
-    borderRadius: "12px",
-    boxShadow: "0 8px 16px rgba(37, 99, 235, 0.2)",
+    borderRadius: "16px",
+    boxShadow: "0 8px 16px rgba(255, 107, 107, 0.2)",
     flexWrap: "wrap",
   },
 
@@ -746,12 +774,13 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "15px",
-    background: "#ffffff",
-    padding: "15px 20px",
-    borderRadius: "8px",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+    padding: "16px 20px",
+    background: "var(--card-bg)",
+    borderRadius: "12px",
+    boxShadow: "0 4px 12px rgba(255, 107, 107, 0.05)",
     transition: "all 0.3s ease",
-    borderLeft: "4px solid #2563eb",
+    borderLeft: "4px solid var(--food-primary)",
+    border: "1px solid var(--card-border)",
   },
 
   workoutNumber: {
@@ -760,7 +789,7 @@ const styles = {
     justifyContent: "center",
     width: "32px",
     height: "32px",
-    background: "#2563eb",
+    background: "var(--food-primary)",
     color: "#ffffff",
     borderRadius: "50%",
     fontWeight: "700",
@@ -769,7 +798,7 @@ const styles = {
   },
 
   workoutText: {
-    color: "#1e293b",
+    color: "var(--text-primary)",
     fontSize: "15px",
     fontWeight: "500",
   },
@@ -785,16 +814,19 @@ const styles = {
     borderRadius: "12px",
     transition: "all 0.3s ease",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+    background: "var(--card-bg)",
+    border: "1px solid var(--card-border)",
   },
 
   mealTitle: {
     fontSize: "18px",
     fontWeight: "700",
     margin: "0 0 12px 0",
+    color: "var(--text-primary)",
   },
 
   mealContent: {
-    color: "#475569",
+    color: "var(--text-secondary)",
     lineHeight: "1.6",
     margin: 0,
     fontSize: "14px",
@@ -809,12 +841,14 @@ const styles = {
   tipCard: {
     display: "flex",
     gap: "15px",
-    background: "#eff6ff",
+    background: "var(--card-bg)",
+    backdropFilter: "blur(4px)",
     padding: "20px",
     borderRadius: "14px",
     boxShadow: "0 10px 25px rgba(15, 23, 42, 0.06)",
     transition: "all 0.3s ease",
     borderLeft: "4px solid #10b981",
+    border: "1px solid var(--card-border)",
   },
 
   speechControlsContainer: {
@@ -827,14 +861,15 @@ const styles = {
 
   speechButton: {
     padding: "12px 18px",
-    borderRadius: "10px",
-    border: "none",
-    background: "#2563eb",
-    color: "#fff",
+    borderRadius: "14px",
+    border: "1px solid var(--card-border)",
+    background: "var(--card-bg)",
+    color: "var(--food-primary)",
     fontWeight: "600",
     cursor: "pointer",
     minWidth: "110px",
     transition: "all 0.2s ease",
+    boxShadow: "0 4px 6px rgba(255, 107, 107, 0.05)",
   },
 
 
@@ -845,10 +880,10 @@ const styles = {
   },
 
   tipText: {
-    color: "#475569",
+    color: "var(--text-secondary)",
     margin: 0,
-    fontSize: "14px",
-    lineHeight: "1.5",
+    fontSize: "14.5px",
+    lineHeight: "1.6",
   },
 
   actionButtons: {
@@ -861,49 +896,50 @@ const styles = {
 
   primaryButton: {
     padding: "14px 32px",
-    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-    color: "#ffffff",
+    background: "var(--food-primary)",
+    color: "var(--button-text)",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "12px",
     cursor: "pointer",
     fontSize: "16px",
-    fontWeight: "600",
+    fontWeight: "700",
     transition: "all 0.3s ease",
-    boxShadow: "0 4px 6px rgba(37, 99, 235, 0.2)",
+    boxShadow: "0 8px 16px rgba(255, 107, 107, 0.2)",
   },
 
   secondaryButton: {
     padding: "14px 32px",
-    background: "#ffffff",
-    color: "#2563eb",
-    border: "2px solid #2563eb",
-    borderRadius: "8px",
+    background: "var(--card-bg)",
+    color: "var(--food-primary)",
+    border: "2px solid var(--food-primary)",
+    borderRadius: "12px",
     cursor: "pointer",
     fontSize: "16px",
-    fontWeight: "600",
+    fontWeight: "700",
     transition: "all 0.3s ease",
-    boxShadow: "0 4px 6px rgba(107, 114, 128, 0.1)",
+    boxShadow: "0 4px 6px rgba(255, 107, 107, 0.1)",
   },
 
   downloadButton: {
     padding: "14px 32px",
-    background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
-    color: "#ffffff",
+    background: "var(--food-secondary)",
+    color: "var(--button-text)",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "12px",
     cursor: "pointer",
     fontSize: "16px",
-    fontWeight: "600",
+    fontWeight: "700",
     transition: "all 0.3s ease",
-    boxShadow: "0 4px 6px rgba(34, 197, 94, 0.2)",
+    boxShadow: "0 8px 16px rgba(76, 209, 55, 0.3)",
   },
 
   planContent: {
-    background: "#f7fbff",
+    background: "var(--card-bg)",
+    backdropFilter: "blur(12px)",
     borderRadius: "24px",
-    padding: "32px",
-    boxShadow: "0 25px 70px rgba(15, 23, 42, 0.08)",
-    border: "1px solid rgba(59, 130, 246, 0.12)",
+    padding: "clamp(16px, 4vw, 32px)",
+    boxShadow: "0 25px 70px rgba(255, 107, 107, 0.08)",
+    border: "1px solid var(--card-border)",
   },
 
   emptyState: {
@@ -911,15 +947,17 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: "70vh",
-    backgroundColor: "#f8fafc",
+    background: "linear-gradient(135deg, var(--bg-start), var(--bg-mid), var(--bg-end))",
   },
 
   emptyStateCard: {
     textAlign: "center",
     padding: "50px",
-    background: "#ffffff",
-    borderRadius: "16px",
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
+    background: "var(--card-bg)",
+    backdropFilter: "blur(12px)",
+    borderRadius: "24px",
+    boxShadow: "0 20px 40px rgba(255, 107, 107, 0.08)",
+    border: "1px solid var(--card-border)",
     maxWidth: "400px",
   },
 
@@ -961,20 +999,17 @@ styleSheet.textContent = `
   }
 
   @media (max-width: 768px) {
-    h1 {
-      font-size: 28px;
+    .plan-content-responsive {
+      padding: 16px !important;
     }
 
-    .summaryGrid {
-      grid-template-columns: repeat(2, 1fr);
+    .summary-grid-responsive {
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
     }
 
-    .dietGrid {
-      grid-template-columns: 1fr;
-    }
-
-    .calorieCard {
+    .calorie-card-responsive {
       flex-direction: column;
+      text-align: center;
     }
   }
 `;

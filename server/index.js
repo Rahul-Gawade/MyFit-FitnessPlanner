@@ -128,25 +128,61 @@ Create a personalized fitness plan based on these details. Adjust workouts, diet
 
 app.post("/ai-coach", async (req, res) => {
   try {
-    const { message, bmi, goal, medical_condition } = req.body;
+    const { message, bmi, goal, medical_condition, healthData, profile, language } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
 
+    const userLanguage = language || "en";
+    const languageLabel = userLanguage === "mr" ? "Marathi" : userLanguage === "hi" ? "Hindi" : "English";
+
+    const medicationText = healthData?.medications?.length
+      ? `Current medications:\n${healthData.medications
+          .map((med) =>
+            `- ${med.name} (${med.dosage}, ${med.frequency})${med.notes ? `: ${med.notes}` : ""}`)
+          .join("\n")}`
+      : "No current medications.";
+
+    const symptomText = healthData?.symptoms?.length
+      ? `Recent symptoms:\n${healthData.symptoms
+          .map((symptom) =>
+            `- ${symptom.symptom} (Severity: ${symptom.severity}/5)${symptom.notes ? `: ${symptom.notes}` : ""}`)
+          .join("\n")}`
+      : "No recent symptoms.";
+
+    const waterText = `Daily water intake: ${healthData?.waterIntake || 0} ml (Goal: 3000 ml)`;
+
+    const profileContext = profile 
+      ? `- Age: ${profile.age || "Unknown"}
+- Gender: ${profile.gender || "Unknown"}
+- Height: ${profile.height || "Unknown"}
+- Weight: ${profile.weight || "Unknown"}
+- BMI: ${profile.bmi || bmi || "Unknown"}
+- Fitness Goal: ${profile.goal || goal || "General fitness"}
+- Activity Level: ${profile.activity_level || "Unknown"}
+- Diet Preference: ${profile.diet_preference || "Unknown"}
+- Medical Condition: ${profile.medical_condition || medical_condition || "None"}`
+      : `- BMI: ${bmi || "Unknown"}
+- Fitness Goal: ${goal || "General fitness"}
+- Medical Condition: ${medical_condition || "None"}`;
+
     const prompt = `You are a friendly AI fitness coach.
+IMPORTANT: You MUST respond entirely in the ${languageLabel} language.
 
 User Context:
-- BMI: ${bmi || "Unknown"}
-- Fitness Goal: ${goal || "General fitness"}
-- Medical Condition: ${medical_condition || "None"}
+${profileContext}
+
+${medicationText}
+${symptomText}
+${waterText}
 
 User Question:
 ${message}
 
 Guidelines:
 - Give short, clear, practical advice (2-3 sentences max)
-- Be conversational and encouraging
+- Be conversational and encouraging in ${languageLabel}
 - Suggest workouts, diet tips, or motivation if relevant
 - Adjust guidance for any medical condition if present
 - Avoid long paragraphs`;
@@ -168,4 +204,5 @@ Guidelines:
   }
 });
 
-app.listen(5000, () => console.log("Server running on 5000"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log("Server running on " + PORT));

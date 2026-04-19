@@ -1,12 +1,25 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import logo from "../assets/logo.png";
+import { Moon, Sun, CircleUser, Menu, X } from "lucide-react";
 
 function Header() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [hovered, setHovered] = useState("");
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+
+  const languages = [
+    { code: "en", label: "EN" },
+    { code: "hi", label: "HI" },
+    { code: "mr", label: "MR" }
+  ];
+
+  const currentLang = languages.find(l => l.code === i18n.language) || languages[0];
 
   const isLoggedIn = localStorage.getItem("isLoggedIn");
 
@@ -15,21 +28,35 @@ function Header() {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      padding: "18px 40px",
+      padding: "12px 20px",
       position: "sticky",
       top: 0,
       zIndex: 1000,
-      background: "rgba(255, 255, 255, 0.82)",
+      background: "var(--card-bg)",
       backdropFilter: "blur(14px)",
-      borderBottom: "1px solid rgba(56, 189, 248, 0.18)",
-      boxShadow: "0 20px 40px rgba(15, 23, 42, 0.08)",
+      borderBottom: "1px solid var(--card-border)",
+      boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)",
+    },
+    logoImg: {
+      width: "40px",
+      height: "40px",
+      objectFit: "contain",
+      borderRadius: "8px",
     },
 
-    logo: {
-      fontSize: "1.6rem",
-      fontWeight: "bold",
-      color: "#2563eb",
+    logoContainer: {
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
       cursor: "pointer",
+      zIndex: 1001,
+    },
+
+    logoText: {
+      fontSize: "1.5rem",
+      fontWeight: "800",
+      color: "var(--food-primary)",
+      letterSpacing: "-0.5px",
     },
 
     nav: {
@@ -41,43 +68,88 @@ function Header() {
       textDecoration: "none",
       color:
         location.pathname === path || hovered === path
-          ? "#2563eb"
-          : "#374151",
-      fontWeight: "500",
+          ? "var(--food-primary)"
+          : "var(--text-secondary)",
+      fontWeight: "600",
       transition: "0.3s",
+      padding: "5px 0",
+      borderBottom: location.pathname === path ? "2px solid var(--food-primary)" : "2px solid transparent",
     }),
 
     authButtons: {
       display: "flex",
-      gap: "10px",
+      gap: "12px",
       alignItems: "center",
     },
 
-    languageSelect: {
-      padding: "8px 10px",
-      borderRadius: "8px",
-      border: "1px solid rgba(37, 99, 235, 0.25)",
-      background: "rgba(255, 255, 255, 0.95)",
-      color: "#1f2937",
+    customDropdown: {
+      position: "relative",
+      display: "inline-block",
+    },
+
+    dropdownBtn: {
+      padding: "8px 14px",
+      borderRadius: "10px",
+      border: "1px solid var(--card-border)",
+      background: "var(--card-bg)",
+      color: "var(--text-primary)",
+      fontWeight: "700",
       cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: "4px",
+      minWidth: "65px",
+      justifyContent: "center",
+      transition: "all 0.3s ease",
+    },
+
+    dropdownMenu: {
+      position: "absolute",
+      top: "110%",
+      right: 0,
+      background: "var(--card-bg)",
+      backdropFilter: "blur(20px)",
+      borderRadius: "12px",
+      border: "1px solid var(--card-border)",
+      boxShadow: "var(--shadow-hover)",
+      padding: "6px",
+      display: langDropdownOpen ? "flex" : "none",
+      flexDirection: "column",
+      gap: "4px",
+      zIndex: 2000,
+      minWidth: "80px",
+    },
+
+    dropdownItem: {
+      padding: "8px 12px",
+      borderRadius: "8px",
+      cursor: "pointer",
+      color: "var(--text-primary)",
+      fontWeight: "600",
+      transition: "background 0.2s ease",
+      textAlign: "center",
     },
 
     loginBtn: {
-      padding: "8px 18px",
-      borderRadius: "8px",
-      border: "1px solid #2563eb",
+      padding: "8px 20px",
+      borderRadius: "10px",
+      border: "2px solid var(--food-primary)",
       background: "transparent",
-      color: "#2563eb",
+      color: "var(--food-primary)",
+      fontWeight: "600",
       cursor: "pointer",
+      transition: "all 0.3s ease",
     },
 
     signupBtn: {
-      padding: "8px 18px",
-      borderRadius: "8px",
+      padding: "8px 20px",
+      borderRadius: "10px",
       border: "none",
-      background: "#2563eb",
-      color: "#fff",
+      background: "var(--food-primary)",
+      color: "var(--button-text)",
+      fontWeight: "600",
       cursor: "pointer",
+      transition: "all 0.3s ease",
     },
   };
 
@@ -91,20 +163,29 @@ function Header() {
     localStorage.setItem("appLanguage", language);
   };
 
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+  };
+
   return (
     <header style={styles.header}>
       {/* Logo */}
-      <div style={styles.logo} onClick={() => navigate("/")}>
-        MyFit
+      <div style={styles.logoContainer} className="hover-scale" onClick={() => navigate("/")}>
+        <img src={logo} alt="MyFit Logo" style={styles.logoImg} />
+        <span className="logo-text-header" style={styles.logoText}>MyFit</span>
       </div>
 
       {/* Navigation */}
-      <nav style={styles.nav}>
+      <nav style={styles.nav} className={`nav-menu ${mobileMenuOpen ? 'active' : ''}`}>
         <Link
           to="/home"
           style={styles.navLink("/home")}
           onMouseEnter={() => setHovered("/home")}
           onMouseLeave={() => setHovered("")}
+          onClick={() => setMobileMenuOpen(false)}
         >
           {t("header.home")}
         </Link>
@@ -114,6 +195,7 @@ function Header() {
           style={styles.navLink("/bmi")}
           onMouseEnter={() => setHovered("/bmi")}
           onMouseLeave={() => setHovered("")}
+          onClick={() => setMobileMenuOpen(false)}
         >
           {t("header.bmi")}
         </Link>
@@ -123,6 +205,7 @@ function Header() {
           style={styles.navLink("/recommendation")}
           onMouseEnter={() => setHovered("/recommendation")}
           onMouseLeave={() => setHovered("")}
+          onClick={() => setMobileMenuOpen(false)}
         >
           {t("header.recommendation")}
         </Link>
@@ -132,6 +215,7 @@ function Header() {
           style={styles.navLink("/health")}
           onMouseEnter={() => setHovered("/health")}
           onMouseLeave={() => setHovered("")}
+          onClick={() => setMobileMenuOpen(false)}
         >
           {t("header.healthTracker")}
         </Link>
@@ -141,6 +225,7 @@ function Header() {
           style={styles.navLink("/ai")}
           onMouseEnter={() => setHovered("/ai")}
           onMouseLeave={() => setHovered("")}
+          onClick={() => setMobileMenuOpen(false)}
         >
           {t("header.aiCoach")}
         </Link>
@@ -151,45 +236,80 @@ function Header() {
             style={styles.navLink("/profile")}
             onMouseEnter={() => setHovered("/profile")}
             onMouseLeave={() => setHovered("")}
-          >
-            {t("header.profile")}
+            onClick={() => setMobileMenuOpen(false)}
+          > <CircleUser size={26} color="var(--food-primary)" />
           </Link>
         )}
       </nav>
 
       {/* Auth Buttons */}
-      <div style={styles.authButtons}>
-        <select
-          value={i18n.language}
-          onChange={(e) => changeLanguage(e.target.value)}
-          style={styles.languageSelect}
+      <div className="header-actions">
+        <button
+          onClick={toggleTheme}
+          title="Toggle Theme"
+          className="theme-toggle"
         >
-          <option value="en">EN</option>
-          <option value="hi">HI</option>
-          <option value="mr">MR</option>
-        </select>
+          {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
+
+        {/* Premium Custom Language Dropdown */}
+        <div style={styles.customDropdown} className="language-select-header">
+          <button
+            style={styles.dropdownBtn}
+            onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+            className="hover-glow"
+          >
+            {currentLang.label} ▾
+          </button>
+          <div style={styles.dropdownMenu} className="animate-scale-in">
+            {languages.map((lang) => (
+              <div
+                key={lang.code}
+                style={{
+                  ...styles.dropdownItem,
+                  background: i18n.language === lang.code ? "rgba(255, 107, 107, 0.1)" : "transparent",
+                  color: i18n.language === lang.code ? "var(--food-primary)" : "var(--text-primary)",
+                }}
+                onClick={() => {
+                  changeLanguage(lang.code);
+                  setLangDropdownOpen(false);
+                }}
+                className="hover-lift"
+              >
+                {lang.label}
+              </div>
+            ))}
+          </div>
+        </div>
 
         {!isLoggedIn ? (
-          <>
+          <div className="auth-group">
             <button
               style={styles.loginBtn}
-              onClick={() => navigate("/login")}
+              onClick={() => { navigate("/login"); setMobileMenuOpen(false); }}
             >
               {t("header.login")}
             </button>
 
             <button
               style={styles.signupBtn}
-              onClick={() => navigate("/signup")}
+              onClick={() => { navigate("/signup"); setMobileMenuOpen(false); }}
             >
               {t("header.signup")}
             </button>
-          </>
+          </div>
         ) : (
-          <button style={styles.signupBtn} onClick={handleLogout}>
+          <button style={styles.signupBtn} onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
             {t("header.logout")}
           </button>
         )}
+
+        <button
+          className="mobile-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
     </header>
   );

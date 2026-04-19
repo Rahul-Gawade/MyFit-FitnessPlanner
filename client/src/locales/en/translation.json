@@ -98,7 +98,7 @@
     "conditionContent": "Since you indicated {{condition}}, this plan includes safer exercise choices and dietary suggestions tailored for better health support."
   },
   "aiCoach": {
-    "title": "🤖 AI Fitness Coach",
+    "title": "AI Fitness Coach",
     "placeholder": "Ask about diet, workout, BMI...",
     "send": "Send",
     "serverError": "⚠️ Server error. Try again."

@@ -1,18 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
 :root {
-  --bg-start: #e0fbff;
-  --bg-mid: #f8f8ff;
-  --bg-end: #f5f3ff;
-  --card-bg: rgba(255, 255, 255, 0.82);
-  --card-border: rgba(122, 123, 255, 0.18);
-  --text-primary: #102a43;
-  --text-secondary: #334155;
-  --accent: #38bdf8;
-  --accent-strong: #22c55e;
-  --accent-soft: #a78bfa;
+  --food-primary: #ff6b6b;
+  --food-primary-hover: #fa5252;
+  --food-secondary: #4cd137;
+  --food-secondary-hover: #44bd32;
+  --food-accent: #fbc531;
+  
+  --bg-start: #fff9f0;
+  --bg-mid: #fffdfa;
+  --bg-end: #ffffff;
+  
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(255, 107, 107, 0.15);
+  
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  
+  --accent: #ff6b6b;
+  --accent-strong: #4cd137;
+  --accent-soft: #fbc531;
+  
   --button-text: #ffffff;
-  --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 20px 40px rgba(255, 107, 107, 0.08);
+  --shadow-hover: 0 25px 50px rgba(255, 107, 107, 0.15);
   --radius: 24px;
-  --font-sans: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-sans: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --ai-bubble-bg: #f1f2f6;
+  --warning-bg: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  --warning-border: #fcd34d;
+  --warning-text: #92400e;
+}
+
+[data-theme='dark'] {
+  --food-primary: #ff6b6b;
+  --food-primary-hover: #ff8787;
+  --food-secondary: #00d2d3;
+  --food-secondary-hover: #1dd1a1;
+  --food-accent: #ff9f43;
+  --bg-start: #0f172a;
+  --bg-mid: #020617;
+  --bg-end: #0f172a;
+  --card-bg: rgba(30, 41, 59, 0.85);
+  --card-border: rgba(255, 107, 107, 0.15);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --ai-bubble-bg: rgba(255, 255, 255, 0.1);
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --warning-border: rgba(245, 158, 11, 0.3);
+  --warning-text: #fcd34d;
+  --button-text: #ffffff;
+  --shadow-soft: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 25px 50px rgba(255, 107, 107, 0.25);
+}
+
+/* ── Global dark-mode text overrides ── */
+/* Fixes hardcoded inline-style colors in components */
+[data-theme='dark'] body,
+[data-theme='dark'] h1,
+[data-theme='dark'] h2,
+[data-theme='dark'] h3,
+[data-theme='dark'] h4,
+[data-theme='dark'] h5,
+[data-theme='dark'] h6,
+[data-theme='dark'] p,
+[data-theme='dark'] span,
+[data-theme='dark'] label,
+[data-theme='dark'] li,
+[data-theme='dark'] td,
+[data-theme='dark'] th {
+  color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] input,
+[data-theme='dark'] textarea,
+[data-theme='dark'] select {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(255, 107, 107, 0.25) !important;
+}
+
+[data-theme='dark'] input::placeholder,
+[data-theme='dark'] textarea::placeholder {
+  color: var(--text-secondary) !important;
+}
+
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-soft);
+  border-radius: var(--radius);
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
 }
 
 * {
@@ -56,6 +144,15 @@ button:hover {
   transform: translateY(-1px);
 }
 
+input:focus, 
+textarea:focus, 
+select:focus, 
+button:focus {
+  outline: none !important;
+  border-color: var(--food-primary) !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1) !important;
+}
+
 h1,
 h2,
 h3,
@@ -69,6 +166,86 @@ p {
 
 ::selection {
   background: rgba(56, 189, 248, 0.2);
+}
+
+/* Header Responsiveness */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justifyContent: center;
+  padding: 8px;
+}
+
+.auth-group {
+  display: flex;
+  gap: 12px;
+}
+
+.mobile-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--food-primary);
+  cursor: pointer;
+  padding: 5px;
+  z-index: 1001;
+}
+
+@media (max-width: 900px) {
+  .nav-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    padding: 80px 30px;
+    gap: 20px !important;
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+    border-left: 1px solid var(--card-border);
+    z-index: 1000;
+  }
+
+  .nav-menu.active {
+    right: 0;
+  }
+
+  .mobile-toggle {
+    display: block;
+    margin-left: 5px;
+  }
+
+  .auth-group {
+    display: none;
+  }
+  
+  .header-actions {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .language-select-header {
+    display: none; /* Hide language selector on tiny screens to prevent header overflow */
+  }
+  
+  .logo-text-header {
+    display: none; /* Hide 'MyFit' text, show only logo on very small screens */
+  }
 }
 
 /* Mobile Responsive */
@@ -107,12 +284,92 @@ p {
     font-size: 20px;
   }
 
-  h2 {
-    font-size: 18px;
-  }
-
   h3 {
     font-size: 16px;
   }
 }
 
+/* =========================================
+   INNOVATIVE FITNESS ANIMATIONS & TRANSITIONS
+   ========================================= */
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(255, 107, 107, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+}
+
+@keyframes slide-up-fade {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Base Animation Utilities */
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-pulse {
+  animation: pulse-glow 2s infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up-fade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-bg-shift {
+  background-size: 200% 200% !important;
+  animation: gradient-shift 5s ease infinite;
+}
+
+/* Staggered entry classes */
+.stagger-1 { animation-delay: 0.1s; opacity: 0; }
+.stagger-2 { animation-delay: 0.2s; opacity: 0; }
+.stagger-3 { animation-delay: 0.3s; opacity: 0; }
+.stagger-4 { animation-delay: 0.4s; opacity: 0; }
+.stagger-5 { animation-delay: 0.5s; opacity: 0; }
+
+/* Enhanced Hover Utilities */
+.hover-scale {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.03) translateY(-5px);
+  box-shadow: 0 25px 40px rgba(255, 107, 107, 0.15);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 25px rgba(255, 107, 107, 0.4);
+}
+
+/* Scrollbar Hiding Utility */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}

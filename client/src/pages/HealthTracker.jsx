@@ -73,12 +73,12 @@ function HealthTracker() {
   };
 
   return (
-    <div style={styles.pageContainer}>
+    <div >
       <Header />
-      <div style={styles.contentContainer}>
-<h1 style={styles.pageTitle}>{t("healthTracker.title")}</h1>
-      <p style={styles.pageSubtitle}>
-        {t("healthTracker.subtitle")}
+      <div style={styles.pageContainer}>
+        <h1 style={styles.pageTitle}>{t("healthTracker.title")}</h1>
+        <p style={styles.pageSubtitle}>
+          {t("healthTracker.subtitle")}
         </p>
 
         <div style={styles.tabGroup}>
@@ -238,12 +238,10 @@ function HealthTracker() {
 const styles = {
   pageContainer: {
     minHeight: "100vh",
-    background: "#f8fafc",
-  },
-  contentContainer: {
-    maxWidth: "1040px",
-    margin: "0 auto",
-    padding: "30px 20px 60px",
+    background: "linear-gradient(135deg, var(--bg-start), var(--bg-mid), var(--bg-end))",
+    fontFamily: "var(--font-sans)",
+    padding: "60px",
+
   },
   pageTitle: {
     fontSize: "32px",
@@ -274,28 +272,32 @@ const styles = {
   activeTab: {
     padding: "12px 20px",
     borderRadius: "10px",
-    border: "1px solid #2563eb",
-    background: "#eff6ff",
-    color: "#1d4ed8",
+    border: "1px solid var(--food-primary)",
+    background: "var(--card-bg)",
+    color: "var(--food-primary)",
     cursor: "pointer",
     fontWeight: 700,
   },
   panel: {
     display: "grid",
-    gridTemplateColumns: "1.2fr 1fr",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 450px), 1fr))",
     gap: "24px",
   },
   formCard: {
-    background: "#ffffff",
+    background: "var(--card-bg)",
+    backdropFilter: "blur(12px)",
     padding: "26px",
     borderRadius: "20px",
-    boxShadow: "0 16px 40px rgba(15, 23, 42, 0.08)",
+    boxShadow: "0 16px 40px rgba(255, 107, 107, 0.08)",
+    border: "1px solid var(--card-border)",
   },
   listCard: {
-    background: "#ffffff",
+    background: "var(--card-bg)",
+    backdropFilter: "blur(12px)",
     padding: "26px",
     borderRadius: "20px",
-    boxShadow: "0 16px 40px rgba(15, 23, 42, 0.08)",
+    boxShadow: "0 16px 40px rgba(255, 107, 107, 0.08)",
+    border: "1px solid var(--card-border)",
     minHeight: "320px",
   },
   sectionTitle: {
@@ -342,11 +344,13 @@ const styles = {
     padding: "14px 22px",
     borderRadius: "12px",
     border: "none",
-    background: "#2563eb",
-    color: "#ffffff",
+    background: "var(--food-primary)",
+    color: "var(--button-text)",
     cursor: "pointer",
     fontSize: "15px",
     fontWeight: 700,
+    boxShadow: "0 8px 16px rgba(255, 107, 107, 0.2)",
+    transition: "all 0.3s ease",
   },
   listItem: {
     display: "flex",

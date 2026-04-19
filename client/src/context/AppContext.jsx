@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 
 export const AppContext = createContext();
 
@@ -6,79 +7,157 @@ export const AppProvider = ({ children }) => {
   const [plan, setPlanState] = useState(null);
   const [medicationList, setMedicationList] = useState([]);
   const [symptomLogs, setSymptomLogs] = useState([]);
+  const [aiCoachChat, setAiCoachChat] = useState([]);
+  const [waterIntake, setWaterIntake] = useState(0); // in ml
 
-  // ✅ Load saved state from localStorage
+  // ✅ Load saved state from Supabase/localStorage
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("plan");
-      if (saved) {
-        setPlanState(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error("Error parsing plan:", error);
-      localStorage.removeItem("plan");
-    }
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Fetch Medications
+        const { data: meds } = await supabase
+          .from("health_logs")
+          .select("data")
+          .eq("user_id", user.id)
+          .eq("type", "medication")
+          .order("created_at", { ascending: true });
+        
+        if (meds) setMedicationList(meds.map(m => m.data).filter(Boolean));
 
-    try {
-      const savedMeds = localStorage.getItem("medicationList");
-      if (savedMeds) {
-        setMedicationList(JSON.parse(savedMeds));
-      }
-    } catch (error) {
-      console.error("Error parsing medication list:", error);
-      localStorage.removeItem("medicationList");
-    }
+        // Fetch Symptoms
+        const { data: symptoms } = await supabase
+          .from("health_logs")
+          .select("data")
+          .eq("user_id", user.id)
+          .eq("type", "symptom")
+          .order("created_at", { ascending: false });
+        
+        if (symptoms) setSymptomLogs(symptoms.map(s => s.data).filter(Boolean));
 
-    try {
-      const savedSymptoms = localStorage.getItem("symptomLogs");
-      if (savedSymptoms) {
-        setSymptomLogs(JSON.parse(savedSymptoms));
+        // Fetch Water Intake for today
+        const today = new Date().toISOString().split('T')[0];
+        const { data: water } = await supabase
+          .from("health_logs")
+          .select("data")
+          .eq("user_id", user.id)
+          .eq("type", "water")
+          .gte("created_at", today);
+        
+        if (water && water.length > 0) {
+          const total = water.reduce((acc, curr) => acc + (curr.data?.amount || 0), 0);
+          setWaterIntake(total);
+        }
+
+        // Fetch Chat History
+        const { data: chats } = await supabase
+          .from("chat_logs")
+          .select("data")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true });
+        
+        if (chats) setAiCoachChat(chats.map(c => c.data).filter(Boolean));
+      } else {
+        // Fallback to localStorage if no user
+        try {
+          const savedMeds = localStorage.getItem("medicationList");
+          if (savedMeds) setMedicationList(JSON.parse(savedMeds));
+          
+          const savedSymptoms = localStorage.getItem("symptomLogs");
+          if (savedSymptoms) setSymptomLogs(JSON.parse(savedSymptoms));
+        } catch (e) {
+          console.error("Local storage error:", e);
+        }
       }
-    } catch (error) {
-      console.error("Error parsing symptom logs:", error);
-      localStorage.removeItem("symptomLogs");
-    }
+
+      // Plan (usually ephemeral or synced separately)
+      try {
+        const saved = localStorage.getItem("plan");
+        if (saved) setPlanState(JSON.parse(saved));
+      } catch (error) {
+        console.error("Error parsing plan:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const saveState = (key, value) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error(`Error saving ${key}:`, error);
+  const saveToSupabase = async (type, data) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (type === "chat") {
+      await supabase.from("chat_logs").insert({
+        user_id: user.id,
+        data: data,
+        created_at: new Date()
+      });
+    } else {
+      await supabase.from("health_logs").insert({
+        user_id: user.id,
+        type: type,
+        data: data,
+        created_at: new Date()
+      });
     }
   };
 
-  // ✅ Custom setter (auto-save to localStorage)
+  const removeFromSupabase = async (type, id) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase.from("health_logs")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("type", type)
+      .filter("data->>id", "eq", id);
+  };
+
   const setPlan = (newPlan) => {
     setPlanState(newPlan);
-    saveState("plan", newPlan);
+    localStorage.setItem("plan", JSON.stringify(newPlan));
   };
 
-  const addMedication = (medication) => {
+  const addMedication = async (medication) => {
     const updated = [...medicationList, medication];
     setMedicationList(updated);
-    saveState("medicationList", updated);
+    localStorage.setItem("medicationList", JSON.stringify(updated));
+    await saveToSupabase("medication", medication);
   };
 
-  const removeMedication = (id) => {
+  const removeMedication = async (id) => {
     const updated = medicationList.filter((item) => item.id !== id);
     setMedicationList(updated);
-    saveState("medicationList", updated);
+    localStorage.setItem("medicationList", JSON.stringify(updated));
+    await removeFromSupabase("medication", id);
   };
 
-  const addSymptomLog = (log) => {
+  const addSymptomLog = async (log) => {
     const updated = [log, ...symptomLogs];
     setSymptomLogs(updated);
-    saveState("symptomLogs", updated);
+    localStorage.setItem("symptomLogs", JSON.stringify(updated));
+    await saveToSupabase("symptom", log);
   };
 
-  const removeSymptomLog = (id) => {
+  const removeSymptomLog = async (id) => {
     const updated = symptomLogs.filter((item) => item.id !== id);
     setSymptomLogs(updated);
-    saveState("symptomLogs", updated);
+    localStorage.setItem("symptomLogs", JSON.stringify(updated));
+    await removeFromSupabase("symptom", id);
   };
 
-  // ✅ Optional: clear plan (useful for logout/reset)
+  const addWater = async (amount) => {
+    const newTotal = waterIntake + amount;
+    setWaterIntake(newTotal);
+    await saveToSupabase("water", { amount, unit: "ml" });
+  };
+
+  const addChatMessage = async (msg) => {
+    setAiCoachChat((prev) => [...prev, msg]);
+    await saveToSupabase("chat", msg);
+  };
+
   const clearPlan = () => {
     setPlanState(null);
     localStorage.removeItem("plan");
@@ -96,6 +175,10 @@ export const AppProvider = ({ children }) => {
         symptomLogs,
         addSymptomLog,
         removeSymptomLog,
+        waterIntake,
+        addWater,
+        aiCoachChat,
+        addChatMessage,
       }}
     >
       {children}

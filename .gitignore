@@ -1,0 +1,27 @@
+# Monorepo Root gitignore
+
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build and output
+client/dist/
+server/dist/
+server/build/
+
+# Environment
+.env
+client/.env
+server/.env
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
