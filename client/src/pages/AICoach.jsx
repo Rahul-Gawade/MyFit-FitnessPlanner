@@ -6,7 +6,7 @@ import { API } from "../services/api";
 import { Bot, Send, User } from "lucide-react";
 
 function AICoach() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { plan, medicationList, symptomLogs, waterIntake, aiCoachChat: chat, addChatMessage } = useContext(AppContext); 
 
   const [message, setMessage] = useState("");
@@ -46,13 +46,20 @@ function AICoach() {
         }),
       });
 
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(`Server Error: ${res.status}`);
+      }
 
+      const data = await res.json();
       const aiMsg = { sender: "ai", text: data.reply };
       addChatMessage(aiMsg);
 
     } catch (err) {
-      addChatMessage({ sender: "ai", text: t("aiCoach.serverError") });
+      console.error("AI Coach Fetch Error:", err);
+      const errorMsg = err.message.includes("404") 
+        ? "Error 404: Bot service not found. Check your PORT." 
+        : t("aiCoach.serverError");
+      addChatMessage({ sender: "ai", text: errorMsg });
     }
 
     setMessage("");
