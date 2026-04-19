@@ -163,6 +163,13 @@ export const AppProvider = ({ children }) => {
     await saveToSupabase("chat", msg);
   };
 
+  const clearChat = async () => {
+    setAiCoachChat([]);
+    if (user) {
+      await supabase.from("chat_logs").delete().eq("user_id", user.id);
+    }
+  };
+
   const clearPlan = () => {
     setPlanState(null);
     localStorage.removeItem("plan");
@@ -184,6 +191,7 @@ export const AppProvider = ({ children }) => {
         addWater,
         aiCoachChat,
         addChatMessage,
+        clearChat,
       }}
     >
       {children}

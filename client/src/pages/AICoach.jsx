@@ -3,11 +3,11 @@ import { useTranslation } from "react-i18next";
 import { AppContext } from "../context/AppContext";
 import Navbar from "../components/Header";
 import { API } from "../services/api";
-import { Bot, Send, User } from "lucide-react";
+import { Bot, Send, User, Trash2 } from "lucide-react";
 
 function AICoach() {
   const { t, i18n } = useTranslation();
-  const { plan, medicationList, symptomLogs, waterIntake, aiCoachChat: chat, addChatMessage } = useContext(AppContext); 
+  const { plan, medicationList, symptomLogs, waterIntake, aiCoachChat: chat, addChatMessage, clearChat } = useContext(AppContext);
 
   const [message, setMessage] = useState("");
   const chatEndRef = useRef(null);
@@ -134,8 +134,21 @@ function AICoach() {
       <Navbar />
 
       <div style={styles.container}>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)', marginBottom: '20px' }}>
-          <Bot color="var(--food-primary)" size={32} /> {t("aiCoach.title")}
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)', marginBottom: '20px', justifyContent: 'space-between' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Bot color="var(--food-primary)" size={32} /> {t("aiCoach.title")}
+          </span>
+          {chat.length > 0 && (
+            <button
+              onClick={() => { if (window.confirm("Clear all chat history?")) clearChat(); }}
+              title="Clear chat"
+              style={{ background: 'none', border: '1px solid var(--card-border)', borderRadius: '10px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '13px', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#e74c3c'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+            >
+              <Trash2 size={15} /> Clear
+            </button>
+          )}
         </h2>
 
         {/* Chat */}
