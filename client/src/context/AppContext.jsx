@@ -4,23 +4,25 @@ import { supabase } from "../lib/supabase";
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [plan, setPlanState] = useState(null);
   const [medicationList, setMedicationList] = useState([]);
   const [symptomLogs, setSymptomLogs] = useState([]);
   const [aiCoachChat, setAiCoachChat] = useState([]);
-  const [waterIntake, setWaterIntake] = useState(0); // in ml
+  const [waterIntake, setWaterIntake] = useState(0);
 
   // ✅ Load saved state from Supabase/localStorage
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      setUser(authUser);
       
-      if (user) {
+      if (authUser) {
         // Fetch Medications
         const { data: meds } = await supabase
           .from("health_logs")
           .select("data")
-          .eq("user_id", user.id)
+          .eq("user_id", authUser.id)
           .eq("type", "medication")
           .order("created_at", { ascending: true });
         
@@ -30,18 +32,18 @@ export const AppProvider = ({ children }) => {
         const { data: symptoms } = await supabase
           .from("health_logs")
           .select("data")
-          .eq("user_id", user.id)
+          .eq("user_id", authUser.id)
           .eq("type", "symptom")
           .order("created_at", { ascending: false });
         
         if (symptoms) setSymptomLogs(symptoms.map(s => s.data).filter(Boolean));
 
-        // Fetch Water Intake for today
+        // Fetch Water Intake
         const today = new Date().toISOString().split('T')[0];
         const { data: water } = await supabase
           .from("health_logs")
           .select("data")
-          .eq("user_id", user.id)
+          .eq("user_id", authUser.id)
           .eq("type", "water")
           .gte("created_at", today);
         
@@ -54,16 +56,15 @@ export const AppProvider = ({ children }) => {
         const { data: chats } = await supabase
           .from("chat_logs")
           .select("data")
-          .eq("user_id", user.id)
+          .eq("user_id", authUser.id)
           .order("created_at", { ascending: true });
         
         if (chats) setAiCoachChat(chats.map(c => c.data).filter(Boolean));
       } else {
-        // Fallback to localStorage if no user
+        // Fallback to localStorage
         try {
           const savedMeds = localStorage.getItem("medicationList");
           if (savedMeds) setMedicationList(JSON.parse(savedMeds));
-          
           const savedSymptoms = localStorage.getItem("symptomLogs");
           if (savedSymptoms) setSymptomLogs(JSON.parse(savedSymptoms));
         } catch (e) {
@@ -71,7 +72,6 @@ export const AppProvider = ({ children }) => {
         }
       }
 
-      // Plan (usually ephemeral or synced separately)
       try {
         const saved = localStorage.getItem("plan");
         if (saved) setPlanState(JSON.parse(saved));
@@ -81,10 +81,16 @@ export const AppProvider = ({ children }) => {
     };
 
     fetchData();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
   const saveToSupabase = async (type, data) => {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     if (type === "chat") {
@@ -104,7 +110,6 @@ export const AppProvider = ({ children }) => {
   };
 
   const removeFromSupabase = async (type, id) => {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     await supabase.from("health_logs")
