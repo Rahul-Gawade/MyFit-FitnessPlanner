@@ -155,7 +155,7 @@ function Signup() {
           />
 
           <button style={styles.button} disabled={loading} className="hover-scale">
-            {loading ? t("signup.signingUp") || "Signing Up..." : t("signup.signUpButton")}
+            {loading ? t("signup.signingUp") : t("signup.signUpButton")}
           </button>
         </form>
 

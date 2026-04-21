@@ -42,16 +42,16 @@ function BMI() {
     let colorCode = "";
 
     if (bmi < 18.5) {
-      category = "Underweight";
+      category = t("bmi.underweight");
       colorCode = "#f59e0b";
     } else if (bmi < 24.9) {
-      category = "Normal weight";
+      category = t("bmi.normal");
       colorCode = "#10b981";
     } else if (bmi < 29.9) {
-      category = "Overweight";
+      category = t("bmi.overweight");
       colorCode = "#f97316";
     } else {
-      category = "Obese";
+      category = t("bmi.obese");
       colorCode = "#ef4444";
     }
 
@@ -128,7 +128,7 @@ function BMI() {
   };
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} className="page-enter">
       <Navbar />
 
       <div style={styles.card}>

@@ -5,6 +5,54 @@ import { Target, Activity, Flame, Dumbbell, Apple, Stethoscope, MessageSquare, C
 import { AppContext } from "../context/AppContext";
 import Navbar from "../components/Header";
 
+// Animated count-up number
+function AnimatedNumber({ target, suffix = "" }) {
+  const [val, setVal] = useState(0);
+  const hasMounted = useRef(false);
+  useEffect(() => {
+    if (hasMounted.current) return;
+    hasMounted.current = true;
+    const n = parseFloat(String(target).replace(/[^0-9.]/g, "")) || 0;
+    if (n === 0) { setVal(target); return; }
+    const steps = 40;
+    const duration = 900;
+    const interval = duration / steps;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      const ease = 1 - Math.pow(1 - step / steps, 3);
+      setVal(Math.round(n * ease));
+      if (step >= steps) { setVal(n); clearInterval(timer); }
+    }, interval);
+    return () => clearInterval(timer);
+  }, [target]);
+  return <>{val}{suffix}</>;
+}
+
+// SVG Circular Progress Ring
+function ProgressRing({ value, max, size = 110, stroke = 10, color = "#3b82f6" }) {
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.min(value / max, 1)) * circumference;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
+      <circle
+        cx={size/2} cy={size/2} r={radius} fill="none"
+        stroke={color} strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        className="progress-ring-circle"
+        style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
+      />
+      <text x={size/2} y={size/2 + 6} textAnchor="middle" fontSize="14" fontWeight="700" fill={color}>
+        {Math.round((value / max) * 100)}%
+      </text>
+    </svg>
+  );
+}
+
 function Home() {
   const { t, i18n } = useTranslation();
   const { plan, waterIntake, addWater } = useContext(AppContext);
@@ -13,7 +61,24 @@ function Home() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const speechUtteranceRef = useRef(null);
-  
+  const [streak, setStreak] = useState(0);
+
+  // Load streak
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const lastDate = localStorage.getItem("streakDate");
+    const s = parseInt(localStorage.getItem("streak") || "0");
+    if (lastDate !== today) {
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      const newStreak = lastDate === yesterday ? s + 1 : 1;
+      localStorage.setItem("streak", newStreak);
+      localStorage.setItem("streakDate", today);
+      setStreak(newStreak);
+    } else {
+      setStreak(s);
+    }
+  }, []);
+
   // cancel ongoing speech on unmount
   useEffect(() => {
     return () => {
@@ -111,29 +176,29 @@ function Home() {
           <div style={styles.heroContent} className="animate-slide-up stagger-1">
             <h1 style={styles.heroTitle}>MyFit Fitness Planner</h1>
             <p style={styles.heroSubtitle}>
-              {t("common.heroSubtitle") || "Transform your health with AI-powered personalized fitness plans"}
+              {t("home.heroSubtitle")}
             </p>
             <p style={styles.heroDescription}>
-              {t("common.heroDescription") || "Get a customized workout routine, nutrition plan, and real-time coaching"}
+              {t("home.heroDescription")}
             </p>
             <button
               onClick={() => navigate("/profile")}
               style={styles.heroButton}
             >
-              Start Your Journey →
+              {t("home.startJourney")}
             </button>
             <div style={styles.heroFeatures}>
               <div style={styles.feature}>
                 <span style={styles.featureIcon}><Check size={16} /></span>
-                <span>Personalized Plans</span>
+                <span>{t("home.personalizedPlans")}</span>
               </div>
               <div style={styles.feature}>
                 <span style={styles.featureIcon}><Check size={16} /></span>
-                <span>AI Coach Support</span>
+                <span>{t("home.aiCoachSupport")}</span>
               </div>
               <div style={styles.feature}>
                 <span style={styles.featureIcon}><Check size={16} /></span>
-                <span>Progress Tracking</span>
+                <span>{t("home.progressTracking")}</span>
               </div>
             </div>
           </div>
@@ -262,23 +327,31 @@ function Home() {
 
         {/* Daily Wellness Section */}
         <div style={styles.wellnessSection}>
-          <h2 style={styles.sectionTitle}>Daily Wellness</h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <h2 style={{ ...styles.sectionTitle, marginBottom: 0 }}>{t("home.dailyWellness")}</h2>
+            {streak > 0 && (
+              <div
+                className="streak-badge"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '100px', background: 'linear-gradient(135deg, #ff6b6b, #ff9f43)', color: '#fff', fontWeight: '700', fontSize: '14px' }}
+              >
+                🔥 {streak} {t("home.streakLabel")}
+              </div>
+            )}
+          </div>
           <div style={styles.wellnessGrid}>
             <div style={styles.waterCard}>
               <div style={styles.waterInfo}>
                 <div style={styles.waterIconBox}><Droplets size={28} color="#3b82f6" /></div>
                 <div>
-                  <h3 style={styles.wellnessCardTitle}>Hydration</h3>
+                  <h3 style={styles.wellnessCardTitle}>{t("home.hydration")}</h3>
                   <p style={styles.wellnessCardValue}>{waterIntake} / {waterGoal} ml</p>
                 </div>
-              </div>
-              <div style={styles.progressContainer}>
-                <div style={styles.progressBar}>
-                  <div style={{ ...styles.progressFill, width: `${waterProgress}%` }} />
+                <div style={{ marginLeft: 'auto' }}>
+                  <ProgressRing value={waterIntake} max={waterGoal} color="#3b82f6" />
                 </div>
               </div>
               <div style={styles.waterActions}>
-                {[250, 500].map(amount => (
+                {[250, 500, 750].map(amount => (
                   <button key={amount} onClick={() => handleAddWater(amount)} style={styles.addWaterBtn}>
                     <Plus size={14} /> {amount}ml
                   </button>
@@ -289,8 +362,8 @@ function Home() {
             <div style={styles.quickLogCard} onClick={() => navigate("/health")}>
                <div style={{...styles.waterIconBox, backgroundColor: '#fee2e2'}}><Activity size={28} color="#ef4444" /></div>
                 <div>
-                  <h3 style={styles.wellnessCardTitle}>Quick Log</h3>
-                  <p style={styles.wellnessCardValue}>Health Tracker</p>
+                  <h3 style={styles.wellnessCardTitle}>{t("home.quickLog")}</h3>
+                  <p style={styles.wellnessCardValue}>{t("home.healthTrackerLink")}</p>
                 </div>
             </div>
           </div>
@@ -298,15 +371,15 @@ function Home() {
 
         {/* Speech Controls */}
         <div style={styles.speechControlsContainer}>
-          <button style={styles.speechButton} onClick={startReading}>Start Reading</button>
-          <button style={styles.speechButton} onClick={pauseReading} disabled={!isSpeaking || isPaused}>Pause</button>
-          <button style={styles.speechButton} onClick={resumeReading} disabled={!isPaused}>Resume</button>
-          <button style={styles.speechButton} onClick={stopReading} disabled={!isSpeaking && !isPaused}>Stop</button>
+          <button style={styles.speechButton} onClick={startReading}>{t("home.speechStart")}</button>
+          <button style={styles.speechButton} onClick={pauseReading} disabled={!isSpeaking || isPaused}>{t("home.speechPause")}</button>
+          <button style={styles.speechButton} onClick={resumeReading} disabled={!isPaused}>{t("home.speechResume")}</button>
+          <button style={styles.speechButton} onClick={stopReading} disabled={!isSpeaking && !isPaused}>{t("home.speechStop")}</button>
         </div>
 
         {/* Plan Overview */}
         <div style={styles.cardsSection}>
-          <h2 style={styles.sectionTitle}>Your Plan Overview</h2>
+          <h2 style={styles.sectionTitle}>{t("home.planOverview")}</h2>
           <div style={styles.cardGrid}>
             {cardData.map((card) => (
               <OverviewCard
@@ -325,7 +398,7 @@ function Home() {
         <div style={styles.statsSection}>
           <div style={styles.statBox}>
             <div style={styles.statBoxHeader}>
-              <h3 style={styles.statBoxTitle}>BMI Analysis</h3>
+              <h3 style={styles.statBoxTitle}>{t("home.bmiAnalysis")}</h3>
               <TrendingUp size={24} color="var(--food-primary)" />
             </div>
             <p style={styles.statBoxContent}>{plan.bmiAnalysis}</p>
@@ -366,7 +439,9 @@ function OverviewCard({ card, onHover, onHoverEnd, isHovered, navigate }) {
           </h3>
           {card.route && <span style={styles.cardArrow}>→</span>}
         </div>
-        <p style={styles.cardValue}>{card.value}</p>
+        <p style={styles.cardValue}>
+          <AnimatedNumber target={card.value} />
+        </p>
         <p style={styles.cardDescription}>{card.description}</p>
       </div>
     </div>

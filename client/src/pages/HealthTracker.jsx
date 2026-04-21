@@ -73,7 +73,7 @@ function HealthTracker() {
   };
 
   return (
-    <div >
+    <div className="page-enter">
       <Header />
       <div style={styles.pageContainer}>
         <h1 style={styles.pageTitle}>{t("healthTracker.title")}</h1>

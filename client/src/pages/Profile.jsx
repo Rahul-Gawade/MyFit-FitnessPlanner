@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { AppContext } from "../context/AppContext";
 import Header from "../components/Header";
 import { API } from "../services/api";
+import { launchConfetti } from "../lib/confetti";
 
 import { supabase } from "../lib/supabase";
 
@@ -127,8 +128,23 @@ function Profile() {
       // ✅ Save plan to context (auto-saves to localStorage)
       setPlan(data.plan);
 
-      // ✅ Navigate to recommendation
-      navigate("/recommendation");
+      // 🎉 Confetti celebration + streak update
+      launchConfetti();
+      const today = new Date().toDateString();
+      const lastDate = localStorage.getItem("streakDate");
+      const streak = parseInt(localStorage.getItem("streak") || "0");
+      if (lastDate !== today) {
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        const newStreak = lastDate === yesterday ? streak + 1 : 1;
+        localStorage.setItem("streak", newStreak);
+        localStorage.setItem("streakDate", today);
+      }
+
+      // 🌍 Save the language used for this plan (for mismatch detection)
+      localStorage.setItem("planGeneratedLang", i18n.language || "en");
+
+      // ✅ Navigate to home
+      setTimeout(() => navigate("/home"), 900);
     } catch (error) {
       console.error("Error generating plan:", error);
       alert(t("profile.serverError"));
@@ -350,8 +366,11 @@ function Profile() {
           />
 
           <button style={styles.button} disabled={loading}>
-            {loading ? t("profile.saving") || "Saving..." : t("profile.submitButton")}
+            {loading ? t("profile.saving") : t("profile.submitButton")}
           </button>
+          <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-secondary)', marginTop: '10px' }}>
+            🌍 {t("profile.langNote")}
+          </p>
         </form>
       </div>
     </div>

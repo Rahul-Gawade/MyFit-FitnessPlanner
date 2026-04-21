@@ -10,6 +10,7 @@ function AICoach() {
   const { plan, medicationList, symptomLogs, waterIntake, aiCoachChat: chat, addChatMessage, clearChat } = useContext(AppContext);
 
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef(null);
 
   // ✅ Auto scroll
@@ -18,10 +19,12 @@ function AICoach() {
   }, [chat]);
 
   const sendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || isLoading) return;
 
     const userMsg = { sender: "user", text: message };
     addChatMessage(userMsg);
+    setIsLoading(true);
+    setMessage("");
 
     const savedProfile = JSON.parse(localStorage.getItem("profile") || "{}");
 
@@ -62,6 +65,7 @@ function AICoach() {
       addChatMessage({ sender: "ai", text: errorMsg });
     }
 
+    setIsLoading(false);
     setMessage("");
   };
 
@@ -130,7 +134,7 @@ function AICoach() {
   };
 
   return (
-    <div>
+    <div className="page-enter">
       <Navbar />
 
       <div style={styles.container}>
@@ -140,7 +144,7 @@ function AICoach() {
           </span>
           {chat.length > 0 && (
             <button
-              onClick={() => { if (window.confirm("Clear all chat history?")) clearChat(); }}
+              onClick={() => { if (window.confirm(t("aiCoach.clearConfirm"))) clearChat(); }}
               title="Clear chat"
               style={{ background: 'none', border: '1px solid var(--card-border)', borderRadius: '10px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '13px', transition: 'all 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.color = '#e74c3c'}
@@ -153,6 +157,15 @@ function AICoach() {
 
         {/* Chat */}
         <div style={styles.chatBox} className="hide-scrollbar">
+          {/* Empty state hint */}
+          {chat.length === 0 && !isLoading && (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
+              <p style={{ fontWeight: '600', marginBottom: '8px', fontSize: '16px', color: 'var(--text-primary)' }}>{t("aiCoach.title")}</p>
+              <p style={{ fontSize: '14px', lineHeight: '1.6' }}>{t("aiCoach.emptyHint")}</p>
+              <p style={{ fontSize: '12px', marginTop: '12px', opacity: 0.7, fontStyle: 'italic' }}>{t("aiCoach.langSwitchHint")}</p>
+            </div>
+          )}
           {chat.map((msg, index) => (
             <div key={index} style={styles.message(msg.sender)}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: msg.sender === "user" ? 'flex-end' : 'flex-start', gap: '10px' }}>
@@ -164,6 +177,17 @@ function AICoach() {
               </div>
             </div>
           ))}
+          {/* Typing indicator */}
+          {isLoading && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '12px' }}>
+              <Bot color="var(--food-primary)" size={26} style={{ marginTop: '8px', flexShrink: 0 }} />
+              <div className="typing-indicator">
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+              </div>
+            </div>
+          )}
           <div ref={chatEndRef} />
         </div>
 
@@ -172,14 +196,19 @@ function AICoach() {
           <input
             type="text"
             value={message}
-            placeholder={t("aiCoach.placeholder")}
+            placeholder={isLoading ? t("aiCoach.thinking") : t("aiCoach.placeholder")}
             onChange={(e) => setMessage(e.target.value)}
-            style={styles.input}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()} // ✅ Enter key
+            style={{ ...styles.input, opacity: isLoading ? 0.7 : 1 }}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            disabled={isLoading}
           />
 
-          <button style={{ ...styles.button, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={sendMessage}>
-            {t("aiCoach.send")} <Send size={18} />
+          <button
+            style={{ ...styles.button, display: 'flex', alignItems: 'center', gap: '8px', opacity: isLoading ? 0.6 : 1 }}
+            onClick={sendMessage}
+            disabled={isLoading}
+          >
+            {isLoading ? '...' : <><span>{t("aiCoach.send")}</span> <Send size={18} /></>}
           </button>
         </div>
       </div>

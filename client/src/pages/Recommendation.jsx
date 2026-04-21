@@ -4,16 +4,24 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import Navbar from "../components/Header";
 import jsPDF from "jspdf";
-import { TrendingUp, Flame, Dumbbell, Apple, Lightbulb, Stethoscope, FileDown, MessageSquare, Settings, User, Ruler, Scale, Target, Activity, CalendarDays, Sunrise, Sun, Moon, ClipboardList } from "lucide-react";
+import { TrendingUp, Flame, Dumbbell, Apple, Lightbulb, Stethoscope, FileDown, MessageSquare, Settings, User, Ruler, Scale, Target, Activity, CalendarDays, Sunrise, Sun, Moon, ClipboardList, RefreshCcw, Check, Loader2, X } from "lucide-react";
 
 function Recommendation() {
   const { t, i18n } = useTranslation();
-  const { plan } = useContext(AppContext);
+  const { plan, setPlan } = useContext(AppContext);
   const navigate = useNavigate();
   const [selectedSection, setSelectedSection] = useState("BMI");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const speechUtteranceRef = useRef(null);
+  const [planLang, setPlanLang] = useState("en");
+
+  // Smart Swap States
+  const [swappingType, setSwappingType] = useState(null); // 'breakfast', 'lunch', 'dinner'
+  const [isSwapping, setIsSwapping] = useState(false);
+  const [swapAlternatives, setSwapAlternatives] = useState([]);
+  const [selectedSwap, setSelectedSwap] = useState("");
+  const [swapError, setSwapError] = useState("");
 
   // Helper function to extract calorie number from AI response
   const extractCalorieNumber = (caloriesText) => {
@@ -34,6 +42,52 @@ function Recommendation() {
       }
     };
   }, []);
+
+  const handleSmartSwap = async (type, currentMeal) => {
+    setSwappingType(type);
+    setIsSwapping(true);
+    setSwapError("");
+    setSwapAlternatives([]);
+    setSelectedSwap("");
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/smart-swap`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mealType: type,
+          currentMeal,
+          userSummary: plan.userSummary,
+          language: i18n.language
+        }),
+      });
+
+      if (!response.ok) throw new Error("Swap failed");
+      const data = await response.json();
+      setSwapAlternatives(data.alternatives || []);
+    } catch (err) {
+      console.error("Swap error:", err);
+      setSwapError(t("recommendation.swapError"));
+    } finally {
+      setIsSwapping(false);
+    }
+  };
+
+  const applySwap = () => {
+    if (!selectedSwap || !swappingType) return;
+
+    const updatedPlan = {
+      ...plan,
+      diet: {
+        ...plan.diet,
+        [swappingType]: selectedSwap
+      }
+    };
+
+    setPlan(updatedPlan);
+    setSwappingType(null); // Close the modal
+    setSelectedSwap("");
+  };
 
   const getRecommendationSpeechText = () => {
     if (!plan) return "";
@@ -183,14 +237,14 @@ function Recommendation() {
 
       if (plan.userSummary?.medical_condition && plan.userSummary.medical_condition !== "None") {
         addSection(
-          "Condition Guidance",
+          t("recommendation.conditionGuidance") || "Condition Guidance",
           plan.healthTips?.length
-            ? `Medical Condition: ${plan.userSummary.medical_condition}\nSuggested guidance: ${plan.healthTips.join(" \n")}`
-            : `Medical Condition: ${plan.userSummary.medical_condition}`
+            ? `${t("recommendation.medicalCondition")}: ${plan.userSummary.medical_condition}\nSuggested guidance: ${plan.healthTips.join(" \n")}`
+            : `${t("recommendation.medicalCondition")}: ${plan.userSummary.medical_condition}`
         );
       } else {
         addSection(
-          "Condition Guidance",
+          t("recommendation.conditionGuidance") || "Condition Guidance",
           "No specific medical condition guidance required."
         );
       }
@@ -213,7 +267,7 @@ function Recommendation() {
   if (plan?.userSummary?.medical_condition && plan.userSummary.medical_condition !== "None") {
     detailSections.splice(4, 0, {
       id: "Condition",
-      title: "Condition Guidance",
+      title: t("recommendation.conditionGuidance") || "Condition Guidance",
       icon: <Stethoscope size={24} />,
     });
   }
@@ -302,16 +356,16 @@ function Recommendation() {
         {/* Plan Sections */}
         <div style={styles.speechControlsContainer}>
           <button style={styles.speechButton} onClick={startReading}>
-            Start Reading
+            {t("recommendation.speechStart")}
           </button>
           <button style={styles.speechButton} onClick={pauseReading} disabled={!isSpeaking || isPaused}>
-            Pause
+            {t("recommendation.speechPause")}
           </button>
           <button style={styles.speechButton} onClick={resumeReading} disabled={!isPaused}>
-            Resume
+            {t("recommendation.speechResume")}
           </button>
           <button style={styles.speechButton} onClick={stopReading} disabled={!isSpeaking && !isPaused}>
-            Stop
+            {t("recommendation.speechStop")}
           </button>
         </div>
         <div style={styles.section}>
@@ -386,7 +440,7 @@ function Recommendation() {
                   </div>
                 ))
               ) : (
-                <div style={styles.emptyText}>{t("recommendation.noWorkoutData") || "No workout data available"}</div>
+                <div style={styles.emptyText}>{t("recommendation.noWorkoutData")}</div>
               )}
             </div>
           )}
@@ -394,20 +448,26 @@ function Recommendation() {
           {selectedSection === "Diet" && (
             <div style={styles.dietGrid}>
               <MealCard
-                title={<span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Sunrise size={20} /> Breakfast</span>}
+                title={<span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Sunrise size={20} /> {t("recommendation.breakfast")}</span>}
                 content={plan.diet?.breakfast}
+                type="breakfast"
+                onSwap={handleSmartSwap}
                 bgColor="#fef3c7"
                 borderColor="#f59e0b"
               />
               <MealCard
-                title={<span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Sun size={20} /> Lunch</span>}
+                title={<span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Sun size={20} /> {t("recommendation.lunch")}</span>}
                 content={plan.diet?.lunch}
+                type="lunch"
+                onSwap={handleSmartSwap}
                 bgColor="#ffedd5"
                 borderColor="#f97316"
               />
               <MealCard
-                title={<span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Moon size={20} /> Dinner</span>}
+                title={<span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Moon size={20} /> {t("recommendation.dinner")}</span>}
                 content={plan.diet?.dinner}
+                type="dinner"
+                onSwap={handleSmartSwap}
                 bgColor="#fce7f3"
                 borderColor="#ec4899"
               />
@@ -431,7 +491,7 @@ function Recommendation() {
                   </div>
                 ))
               ) : (
-                <div style={styles.emptyText}>{t("recommendation.noTipsData") || "No health tips available"}</div>
+                <div style={styles.emptyText}>{t("recommendation.noTipsData")}</div>
               )}
             </div>
           )}
@@ -489,9 +549,56 @@ function Recommendation() {
           >
             <Settings size={18} style={{ marginRight: '8px' }} /> {t("recommendation.updateProfile")}
           </button>
-        </div>
+        {/* Smart Swap Modal */}
+        {swappingType && (
+          <div style={styles.modalOverlay}>
+            <div style={styles.modalContent} className="animate-scale-in">
+              <div style={styles.modalHeader}>
+                <h3 style={styles.modalTitle}>{t("recommendation.smartSwap")}</h3>
+                <button style={styles.closeBtn} onClick={() => setSwappingType(null)}><X size={20} /></button>
+              </div>
+
+              {isSwapping ? (
+                <div style={styles.loadingState}>
+                  <Loader2 size={32} className="animate-spin" color="var(--food-primary)" />
+                  <p>{t("recommendation.swapping")}</p>
+                </div>
+              ) : swapError ? (
+                <p style={styles.errorText}>{swapError}</p>
+              ) : (
+                <>
+                  <p style={styles.modalSubtitle}>{t("recommendation.pickAlternative")}:</p>
+                  <div style={styles.alternativesList} className="hide-scrollbar">
+                    {swapAlternatives.map((alt, i) => (
+                      <div 
+                        key={i} 
+                        style={{
+                          ...styles.alternativeItem,
+                          backgroundColor: selectedSwap === alt ? 'rgba(255, 107, 107, 0.1)' : 'transparent',
+                          borderColor: selectedSwap === alt ? 'var(--food-primary)' : 'var(--card-border)'
+                        }}
+                        onClick={() => setSelectedSwap(alt)}
+                      >
+                        <span style={{flex: 1}}>{alt}</span>
+                        {selectedSwap === alt && <Check size={18} color="var(--food-primary)" />}
+                      </div>
+                    ))}
+                  </div>
+                  <button 
+                    style={{...styles.applyBtn, opacity: selectedSwap ? 1 : 0.5, cursor: selectedSwap ? 'pointer' : 'not-allowed'}}
+                    disabled={!selectedSwap}
+                    onClick={applySwap}
+                  >
+                    {t("recommendation.applySwap")}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         </div>
       </div>
+    </div>
     </div>
   );
 }
@@ -513,7 +620,8 @@ function StatCard({ label, value, icon, highlight }) {
 }
 
 // MealCard Component
-function MealCard({ title, content, bgColor, borderColor }) {
+function MealCard({ title, content, type, onSwap, borderColor, bgColor }) {
+  const { t } = useTranslation();
   return (
     <div 
       style={{
@@ -522,7 +630,16 @@ function MealCard({ title, content, bgColor, borderColor }) {
         borderLeft: `4px solid ${borderColor}`
       }}
     >
-      <h3 style={{...styles.mealTitle, color: borderColor}}>{title}</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <h3 style={{...styles.mealTitle, color: borderColor}}>{title}</h3>
+        <button 
+          onClick={() => onSwap(type, content)}
+          style={styles.swapBtn}
+          title={t("recommendation.smartSwap")}
+        >
+          <RefreshCcw size={16} />
+        </button>
+      </div>
       <p style={styles.mealContent}>{content}</p>
     </div>
   );
@@ -530,6 +647,35 @@ function MealCard({ title, content, bgColor, borderColor }) {
 
 // Styles Object
 const styles = {
+  langMismatchBanner: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "14px 20px",
+    background: "rgba(245, 158, 11, 0.1)",
+    borderLeft: "4px solid #f59e0b",
+    borderRadius: "12px",
+    marginBottom: "20px",
+    gap: "12px",
+    flexWrap: "wrap",
+  },
+  langMismatchText: {
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#d97706",
+    flex: 1,
+  },
+  langMismatchBtn: {
+    padding: "8px 18px",
+    borderRadius: "10px",
+    border: "none",
+    background: "#f59e0b",
+    color: "#fff",
+    fontWeight: "700",
+    cursor: "pointer",
+    fontSize: "13px",
+    whiteSpace: "nowrap",
+  },
   mainContainer: {
     maxWidth: "1100px",
     margin: "0 auto",
@@ -964,6 +1110,113 @@ const styles = {
   emptyIcon: {
     fontSize: "60px",
     marginBottom: "20px",
+  },
+  // Smart Swap Styles
+  swapBtn: {
+    padding: "6px",
+    borderRadius: "8px",
+    border: "none",
+    background: "rgba(255, 255, 255, 0.6)",
+    color: "var(--text-secondary)",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    transition: "all 0.2s ease",
+    marginLeft: "10px",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0, 0, 0, 0.4)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10000,
+    padding: "20px",
+  },
+  modalContent: {
+    background: "var(--card-bg)",
+    borderRadius: "24px",
+    padding: "24px",
+    width: "100%",
+    maxWidth: "450px",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+    border: "1px solid var(--card-border)",
+  },
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "20px",
+  },
+  modalTitle: {
+    fontSize: "20px",
+    fontWeight: "700",
+    color: "var(--text-primary)",
+    margin: 0,
+  },
+  modalSubtitle: {
+    fontSize: "14px",
+    color: "var(--text-secondary)",
+    marginBottom: "12px",
+  },
+  closeBtn: {
+    background: "none",
+    border: "none",
+    color: "var(--text-secondary)",
+    cursor: "pointer",
+    padding: "4px",
+    display: "flex",
+  },
+  loadingState: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "12px",
+    padding: "40px 0",
+    color: "var(--text-secondary)",
+  },
+  alternativesList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    maxHeight: "300px",
+    overflowY: "auto",
+    marginBottom: "20px",
+    paddingRight: "5px",
+  },
+  alternativeItem: {
+    padding: "16px",
+    borderRadius: "12px",
+    border: "2px solid var(--card-border)",
+    cursor: "pointer",
+    fontSize: "14.5px",
+    lineHeight: "1.5",
+    color: "var(--text-primary)",
+    display: "flex",
+    alignItems: "center",
+    transition: "all 0.2s ease",
+  },
+  applyBtn: {
+    width: "100%",
+    padding: "14px",
+    borderRadius: "12px",
+    border: "none",
+    background: "var(--food-primary)",
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: "16px",
+    boxShadow: "0 8px 16px rgba(255, 107, 107, 0.2)",
+  },
+  errorText: {
+    color: "#ef4444",
+    textAlign: "center",
+    padding: "20px 0",
+    fontWeight: "500",
   },
 };
 

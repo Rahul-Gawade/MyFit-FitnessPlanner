@@ -1,25 +1,23 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import enTranslation from "./locales/en/translation.json";
-import hiTranslation from "./locales/hi/translation.json";
-import mrTranslation from "./locales/mr/translation.json";
 
-const savedLanguage = localStorage.getItem("appLanguage") || "en";
+const resources = {
+  en: { translation: enTranslation }
+};
 
-i18n.use(initReactI18next).init({
-  resources: {
-    en: { translation: enTranslation },
-    hi: { translation: hiTranslation },
-    mr: { translation: mrTranslation },
-  },
-  lng: savedLanguage,
-  fallbackLng: "en",
-  interpolation: {
-    escapeValue: false,
-  },
-  react: {
-    useSuspense: false,
-  },
-});
+i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: "en", 
+    fallbackLng: "en",
+    interpolation: {
+      escapeValue: false, 
+    },
+    react: {
+      useSuspense: false
+    }
+  });
 
 export default i18n;

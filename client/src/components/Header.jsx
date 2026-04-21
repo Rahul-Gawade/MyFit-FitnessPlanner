@@ -1,25 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import logo from "../assets/logo.png";
 import { Moon, Sun, CircleUser, Menu, X } from "lucide-react";
 
 function Header() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [hovered, setHovered] = useState("");
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-
-  const languages = [
-    { code: "en", label: "EN" },
-    { code: "hi", label: "HI" },
-    { code: "mr", label: "MR" }
-  ];
-
-  const currentLang = languages.find(l => l.code === i18n.language) || languages[0];
 
   const isLoggedIn = localStorage.getItem("isLoggedIn");
 
@@ -87,47 +78,8 @@ function Header() {
       display: "inline-block",
     },
 
-    dropdownBtn: {
-      padding: "8px 14px",
-      borderRadius: "10px",
-      border: "1px solid var(--card-border)",
-      background: "var(--card-bg)",
-      color: "var(--text-primary)",
-      fontWeight: "700",
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      gap: "4px",
-      minWidth: "65px",
-      justifyContent: "center",
-      transition: "all 0.3s ease",
-    },
-
-    dropdownMenu: {
-      position: "absolute",
-      top: "110%",
-      right: 0,
-      background: "var(--card-bg)",
-      backdropFilter: "blur(20px)",
-      borderRadius: "12px",
-      border: "1px solid var(--card-border)",
-      boxShadow: "var(--shadow-hover)",
-      padding: "6px",
-      display: langDropdownOpen ? "flex" : "none",
-      flexDirection: "column",
-      gap: "4px",
-      zIndex: 2000,
-      minWidth: "80px",
-    },
-
-    dropdownItem: {
-      padding: "8px 12px",
-      borderRadius: "8px",
-      cursor: "pointer",
-      color: "var(--text-primary)",
-      fontWeight: "600",
-      transition: "background 0.2s ease",
-      textAlign: "center",
+    customDropdown: {
+      position: "relative",
     },
 
     loginBtn: {
@@ -245,64 +197,37 @@ function Header() {
       {/* Auth Buttons */}
       <div className="header-actions">
         <button
+          style={styles.themeToggle}
           onClick={toggleTheme}
-          title="Toggle Theme"
-          className="theme-toggle"
+          className="hover-glow"
+          title={theme === "light" ? "Dark Mode" : "Light Mode"}
         >
           {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
         </button>
 
-        {/* Premium Custom Language Dropdown */}
-        <div style={styles.customDropdown} className="language-select-header">
-          <button
-            style={styles.dropdownBtn}
-            onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-            className="hover-glow"
-          >
-            {currentLang.label} ▾
-          </button>
-          <div style={styles.dropdownMenu} className="animate-scale-in">
-            {languages.map((lang) => (
-              <div
-                key={lang.code}
-                style={{
-                  ...styles.dropdownItem,
-                  background: i18n.language === lang.code ? "rgba(255, 107, 107, 0.1)" : "transparent",
-                  color: i18n.language === lang.code ? "var(--food-primary)" : "var(--text-primary)",
-                }}
-                onClick={() => {
-                  changeLanguage(lang.code);
-                  setLangDropdownOpen(false);
-                }}
-                className="hover-lift"
+        <div style={styles.authGroup}>
+          {!isLoggedIn ? (
+            <div className="auth-group">
+              <button
+                style={styles.loginBtn}
+                onClick={() => { navigate("/login"); setMobileMenuOpen(false); }}
               >
-                {lang.label}
-              </div>
-            ))}
-          </div>
+                {t("header.login")}
+              </button>
+
+              <button
+                style={styles.signupBtn}
+                onClick={() => { navigate("/signup"); setMobileMenuOpen(false); }}
+              >
+                {t("header.signup")}
+              </button>
+            </div>
+          ) : (
+            <button style={styles.signupBtn} onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
+              {t("header.logout")}
+            </button>
+          )}
         </div>
-
-        {!isLoggedIn ? (
-          <div className="auth-group">
-            <button
-              style={styles.loginBtn}
-              onClick={() => { navigate("/login"); setMobileMenuOpen(false); }}
-            >
-              {t("header.login")}
-            </button>
-
-            <button
-              style={styles.signupBtn}
-              onClick={() => { navigate("/signup"); setMobileMenuOpen(false); }}
-            >
-              {t("header.signup")}
-            </button>
-          </div>
-        ) : (
-          <button style={styles.signupBtn} onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
-            {t("header.logout")}
-          </button>
-        )}
 
         <button
           className="mobile-toggle"

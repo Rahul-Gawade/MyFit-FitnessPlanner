@@ -39,8 +39,7 @@ app.post("/generate-plan", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const userLanguage = language || "en";
-    const languageLabel = userLanguage === "mr" ? "Marathi" : userLanguage === "hi" ? "Hindi" : "English";
+    const languageLabel = "English";
 
     const medicationText = healthData?.medications?.length
       ? `Current medications:\n${healthData.medications
@@ -196,7 +195,7 @@ Guidelines:
     const reply = response.choices[0].message.content;
     res.json({ reply });
   } catch (error) {
-    console.error("AI Coach error:", error.message);
+    console.error("❌ AI COACH ERROR:", error);
     res.status(500).json({ 
       error: "AI Coach failed",
       details: error.message 
@@ -204,5 +203,58 @@ Guidelines:
   }
 });
 
+app.post("/smart-swap", async (req, res) => {
+  try {
+    const { mealType, currentMeal, userSummary, language } = req.body;
+
+    const languageLabel = "English";
+
+    const prompt = `You are a professional nutritionist. A user wants to swap their current ${mealType} meal.
+    
+    Current Meal: "${currentMeal}"
+    User Goal: ${userSummary.goal}
+    Medical Condition: ${userSummary.medical_condition || "None"}
+    Diet Preference: ${userSummary.diet_preference || "Not specified"}
+
+    Provide exactly 3 healthy alternative meal suggestions. 
+    Ensure they are safe for the user's medical condition and fit their diet preference.
+    
+    Return ONLY a JSON array of strings in ${languageLabel}.
+    Example: ["Alternative 1", "Alternative 2", "Alternative 3"]`;
+
+    const response = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.8,
+    });
+
+    const content = response.choices[0].message.content;
+    const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const alternatives = JSON.parse(cleaned);
+
+    res.json({ alternatives });
+  } catch (error) {
+    console.error("Smart Swap Error:", error.message);
+    res.status(500).json({ error: "Failed to generate alternatives" });
+  }
+});
+
+app.get("/", (req, res) => {
+  res.json({ status: "running", api: "MyFit Backend" });
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server running on " + PORT));
+const server = app.listen(PORT, () => {
+    console.log(`🚀 Server is live at http://localhost:${PORT}`);
+    if (!process.env.GROQ_API_KEY) {
+        console.warn("⚠️ WARNING: GROQ_API_KEY is missing in .env file!");
+    }
+});
+
+server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+        console.error(`❌ PORT ${PORT} is already in use. Please kill the other process or use a different port.`);
+    } else {
+        console.error("❌ SERVER ERROR:", e);
+    }
+});
